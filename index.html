@@ -3,176 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>團務管理系統 | 管理後台</title>
+    <title>團務管理系統 | 2.0 儲存版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #fffafa; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #fffafa; padding-bottom: 100px; }
         .card { background: white; border-radius: 1.5rem; box-shadow: 0 4px 20px rgba(255, 182, 193, 0.2); }
         .tab-btn.active { background-color: #fb7185; color: white; }
-        .status-tag { padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
     </style>
 </head>
-<body class="pb-10">
+<body>
 
-    <nav class="p-6">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-rose-500"><i class="fas fa-heart mr-2"></i>團務管家</h1>
-            <div class="text-right">
-                <p class="text-sm font-bold text-gray-700">東蛋場周團 🇯🇵</p>
-                <p id="remind-box" class="text-xs text-gray-400">官方預計：2026/02/15</p>
-            </div>
+    <nav class="p-6 max-w-4xl mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-rose-500"><i class="fas fa-heart mr-2"></i>團務管家 2.0</h1>
+        <div class="text-right">
+            <input type="text" id="groupName" class="bg-transparent border-b border-rose-200 text-right font-bold text-gray-700 focus:outline-none" value="東蛋場周團" onchange="saveConfig()">
+            <p id="remind-box" class="text-[10px] text-gray-400">官方預計：2026/02/15</p>
         </div>
     </nav>
 
     <main class="max-w-4xl mx-auto px-4 space-y-6">
 
-        <section class="card p-5 space-y-4 border-t-4 border-rose-400">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div class="p-2 border-r">
-                    <p class="text-[10px] text-gray-400">總重量</p>
-                    <p class="font-bold text-gray-700">12.5 kg</p>
-                </div>
-                <div class="p-2 border-r">
-                    <p class="text-[10px] text-gray-400">國際總運費</p>
-                    <p class="font-bold text-rose-500">$2,850</p>
-                </div>
-                <div class="p-2 border-r">
-                    <p class="text-[10px] text-gray-400">目前進度</p>
-                    <span class="status-tag bg-blue-100 text-blue-600">官方出貨中</span>
-                </div>
-                <div class="p-2">
-                    <p class="text-[10px] text-gray-400">單位運費</p>
-                    <p class="font-bold text-green-600">$228/kg</p>
-                </div>
-            </div>
-            <div class="flex justify-between text-[10px] text-gray-400 pt-2 border-t">
-                <span class="text-rose-500 font-bold">已下單</span>
-                <span class="text-rose-500 font-bold">官方出貨</span>
-                <span>抵集運倉</span>
-                <span>已回台</span>
-            </div>
-            <div class="w-full bg-gray-100 h-1.5 rounded-full">
-                <div class="bg-rose-400 h-1.5 rounded-full" style="width: 50%"></div>
-            </div>
+        <section class="card p-5 grid grid-cols-2 md:grid-cols-4 gap-4 text-center border-t-4 border-rose-400">
+            <div><p class="text-[10px] text-gray-400">總重量(kg)</p><input type="number" id="totalWeight" class="w-16 text-center font-bold text-gray-700 bg-gray-50 rounded" value="0" onchange="calculateShipping()"></div>
+            <div><p class="text-[10px] text-gray-400">總運費</p><input type="number" id="totalShipCost" class="w-16 text-center font-bold text-rose-500 bg-gray-50 rounded" value="0" onchange="calculateShipping()"></div>
+            <div><p class="text-[10px] text-gray-400">單位運費/kg</p><p id="unitShipCost" class="font-bold text-green-600">$0</p></div>
+            <div><p class="text-[10px] text-gray-400">訂單總數</p><p id="orderCount" class="font-bold text-gray-700">0</p></div>
         </section>
 
         <div class="flex space-x-2 bg-rose-50 p-1 rounded-2xl">
-            <button onclick="switchTab('order')" id="tab-order" class="tab-btn active flex-1 py-2 rounded-xl text-sm font-bold transition">對帳清單</button>
-            <button onclick="switchTab('ship')" id="tab-ship" class="tab-btn flex-1 py-2 rounded-xl text-sm font-bold text-rose-300 transition">賣貨便出貨</button>
+            <button onclick="switchTab('order')" id="tab-order" class="tab-btn active flex-1 py-2 rounded-xl text-sm font-bold">對帳試算表</button>
+            <button onclick="switchTab('ship')" id="tab-ship" class="tab-btn flex-1 py-2 rounded-xl text-sm font-bold text-rose-300">賣貨便出貨</button>
         </div>
 
-        <div id="content-order" class="space-y-4">
-            <div class="card overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-rose-50 text-rose-500 text-[10px]">
-                            <tr>
-                                <th class="p-4">喊單者/品項</th>
-                                <th class="p-4">總金額/方式</th>
-                                <th class="p-4">收款</th>
-                                <th class="p-4">狀態</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-rose-50">
-                            <tr>
-                                <td class="p-4">
-                                    <div class="font-bold text-gray-700">王小明 (min_01)</div>
-                                    <div class="text-[10px] text-gray-400 italic">應援棒x1, 毛巾x2</div>
-                                </td>
-                                <td class="p-4">
-                                    <div class="font-bold">$3,250</div>
-                                    <div class="text-[10px] text-blue-400">匯款</div>
-                                </td>
-                                <td class="p-4">
-                                    <input type="checkbox" checked class="w-4 h-4 accent-rose-500">
-                                </td>
-                                <td class="p-4 text-[10px]">
-                                    <select class="border rounded bg-white p-1">
-                                        <option>已下單</option>
-                                        <option>缺貨</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr class="bg-gray-50/50">
-                                <td class="p-4 opacity-60">
-                                    <div class="font-bold text-gray-700">陳大華 (hwa_88)</div>
-                                    <div class="text-[10px] text-gray-400 italic">隨機小卡x10</div>
-                                </td>
-                                <td class="p-4 opacity-60">
-                                    <div class="font-bold">$1,500</div>
-                                    <div class="text-[10px] text-purple-400">無卡</div>
-                                </td>
-                                <td class="p-4">
-                                    <input type="checkbox" class="w-4 h-4 accent-rose-500">
-                                </td>
-                                <td class="p-4 text-[10px]">
-                                    <span class="text-red-500 font-bold">缺貨</span>
-                                </td>
-                            </tr>
+        <div id="content-order" class="card overflow-hidden animate-fade-in">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-rose-50 text-rose-500 text-[10px]">
+                        <tr>
+                            <th class="p-4">喊單者/商品</th>
+                            <th class="p-4">總金額</th>
+                            <th class="p-4">收款</th>
+                            <th class="p-4">狀態/操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody" class="divide-y divide-rose-50">
                         </tbody>
-                    </table>
-                </div>
+                </table>
             </div>
         </div>
 
-        <div id="content-ship" class="hidden space-y-4">
-            <div class="grid gap-4">
-                <div class="card p-5 border-l-8 border-orange-400">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] text-orange-500 font-bold">賣貨便訂單</span>
-                            <h3 class="font-bold text-gray-700">王小明</h3>
-                        </div>
-                        <label class="flex items-center text-xs text-gray-400">
-                            <input type="checkbox" class="mr-2 w-4 h-4 accent-green-500"> 已出貨
-                        </label>
-                    </div>
-                    <div class="mt-3 text-xs space-y-1 text-gray-500">
-                        <p><i class="fas fa-store mr-2"></i>7-11 新中環門市 (123456)</p>
-                        <p><i class="fas fa-list-ul mr-2"></i>應援棒x1, 毛巾x2</p>
-                        <p><i class="fas fa-barcode mr-2"></i>單號：C202401060001</p>
-                    </div>
-                    <p class="text-[10px] text-right mt-2 text-gray-300">下單日期：2026/01/05</p>
+        <div id="content-ship" class="hidden space-y-4 animate-fade-in">
+            <div id="shipCardsContainer" class="grid gap-4">
                 </div>
-            </div>
         </div>
 
     </main>
 
-    <script>
-        // 切換分頁邏輯
-        function switchTab(tab) {
-            const orderTab = document.getElementById('tab-order');
-            const shipTab = document.getElementById('tab-ship');
-            const orderContent = document.getElementById('content-order');
-            const shipContent = document.getElementById('content-ship');
+    <button onclick="openModal()" class="fixed bottom-8 right-8 w-14 h-14 bg-rose-500 text-white rounded-full shadow-xl flex items-center justify-center text-2xl z-50 hover:scale-110 transition">
+        <i class="fas fa-plus"></i>
+    </button>
 
-            if (tab === 'order') {
-                orderTab.classList.add('active');
-                shipTab.classList.remove('active');
-                orderContent.classList.remove('hidden');
-                shipContent.classList.add('hidden');
-            } else {
-                shipTab.classList.add('active');
-                orderTab.classList.remove('active');
-                shipContent.classList.remove('hidden');
-                orderContent.classList.add('hidden');
+    <div id="orderModal" class="modal p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 space-y-4">
+            <h2 class="text-xl font-bold text-gray-700">新增喊單資料</h2>
+            <div class="space-y-3">
+                <input type="text" id="inName" placeholder="買家名稱" class="w-full border rounded-xl p-3 text-sm">
+                <input type="text" id="inItems" placeholder="商品品項 (如: 小卡x2, 毛巾x1)" class="w-full border rounded-xl p-3 text-sm">
+                <div class="flex space-x-2">
+                    <input type="number" id="inPrice" placeholder="總金額" class="flex-1 border rounded-xl p-3 text-sm">
+                    <select id="inPayMethod" class="border rounded-xl p-3 text-sm">
+                        <option>匯款</option><option>無卡</option><option>貨付</option>
+                    </select>
+                </div>
+                <input type="text" id="inStore" placeholder="賣貨便取件門市" class="w-full border rounded-xl p-3 text-sm">
+                <input type="text" id="inOrderNum" placeholder="賣貨便單號" class="w-full border rounded-xl p-3 text-sm">
+            </div>
+            <div class="flex space-x-2 pt-4">
+                <button onclick="closeModal()" class="flex-1 py-3 text-gray-400 font-bold">取消</button>
+                <button onclick="addOrder()" class="flex-1 py-3 bg-rose-500 text-white rounded-xl font-bold">儲存資料</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let orders = JSON.parse(localStorage.getItem('daigo_orders')) || [];
+
+        // 初始化
+        window.onload = () => {
+            render();
+            document.getElementById('groupName').value = localStorage.getItem('daigo_groupName') || "東蛋場周團";
+            document.getElementById('totalWeight').value = localStorage.getItem('daigo_weight') || 0;
+            document.getElementById('totalShipCost').value = localStorage.getItem('daigo_shipCost') || 0;
+            calculateShipping();
+        };
+
+        function saveConfig() {
+            localStorage.setItem('daigo_groupName', document.getElementById('groupName').value);
+            localStorage.setItem('daigo_weight', document.getElementById('totalWeight').value);
+            localStorage.setItem('daigo_shipCost', document.getElementById('totalShipCost').value);
+        }
+
+        function calculateShipping() {
+            const w = document.getElementById('totalWeight').value;
+            const c = document.getElementById('totalShipCost').value;
+            if(w > 0) {
+                document.getElementById('unitShipCost').innerText = `$${Math.round(c/w)}/kg`;
+            }
+            saveConfig();
+        }
+
+        function switchTab(tab) {
+            document.getElementById('content-order').classList.toggle('hidden', tab !== 'order');
+            document.getElementById('content-ship').classList.toggle('hidden', tab !== 'ship');
+            document.getElementById('tab-order').classList.toggle('active', tab === 'order');
+            document.getElementById('tab-ship').classList.toggle('active', tab === 'ship');
+        }
+
+        function openModal() { document.getElementById('orderModal').classList.add('active'); }
+        function closeModal() { document.getElementById('orderModal').classList.remove('active'); }
+
+        function addOrder() {
+            const order = {
+                id: Date.now(),
+                name: document.getElementById('inName').value,
+                items: document.getElementById('inItems').value,
+                price: document.getElementById('inPrice').value,
+                payMethod: document.getElementById('inPayMethod').value,
+                store: document.getElementById('inStore').value,
+                orderNum: document.getElementById('inOrderNum').value,
+                isPaid: false,
+                isShipped: false,
+                status: '已下單'
+            };
+            if(!order.name) return alert("請輸入買家名稱");
+            orders.push(order);
+            saveAndRender();
+            closeModal();
+            // 清空輸入
+            document.querySelectorAll('#orderModal input').forEach(i => i.value = '');
+        }
+
+        function togglePaid(id) {
+            const order = orders.find(o => o.id === id);
+            order.isPaid = !order.isPaid;
+            saveAndRender();
+        }
+
+        function toggleShipped(id) {
+            const order = orders.find(o => o.id === id);
+            order.isShipped = !order.isShipped;
+            saveAndRender();
+        }
+
+        function deleteOrder(id) {
+            if(confirm("確定要刪除這筆訂單嗎？")) {
+                orders = orders.filter(o => o.id !== id);
+                saveAndRender();
             }
         }
 
-        // 模擬日期檢查提醒
-        const preOrderDate = new Date('2026-02-15');
-        const today = new Date();
-        const diffTime = preOrderDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        function saveAndRender() {
+            localStorage.setItem('daigo_orders', JSON.stringify(orders));
+            render();
+        }
 
-        if (diffDays <= 7) {
-            const remindBox = document.getElementById('remind-box');
-            remindBox.classList.remove('text-gray-400');
-            remindBox.classList.add('text-red-500', 'font-bold', 'animate-pulse');
-            remindBox.innerHTML = `⚠️ 官方即將出貨！剩餘 ${diffDays} 天`;
+        function render() {
+            const tableBody = document.getElementById('orderTableBody');
+            const cardContainer = document.getElementById('shipCardsContainer');
+            tableBody.innerHTML = '';
+            cardContainer.innerHTML = '';
+            document.getElementById('orderCount').innerText = orders.length;
+
+            orders.forEach(o => {
+                // 渲染表格
+                tableBody.innerHTML += `
+                    <tr class="${o.isPaid ? 'bg-green-50/30' : ''}">
+                        <td class="p-4">
+                            <div class="font-bold text-gray-700">${o.name}</div>
+                            <div class="text-[10px] text-gray-400 italic">${o.items}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-bold">$${o.price}</div>
+                            <div class="text-[10px] text-blue-400">${o.payMethod}</div>
+                        </td>
+                        <td class="p-4">
+                            <input type="checkbox" ${o.isPaid ? 'checked' : ''} onchange="togglePaid(${o.id})" class="w-5 h-5 accent-rose-500 cursor-pointer">
+                        </td>
+                        <td class="p-4">
+                            <button onclick="deleteOrder(${o.id})" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+                        </td>
+                    </tr>
+                `;
+
+                // 渲染出貨卡片
+                cardContainer.innerHTML += `
+                    <div class="card p-5 border-l-8 ${o.isShipped ? 'border-green-400 opacity-60' : 'border-orange-400'}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-gray-700 text-lg">${o.name}</h3>
+                                <p class="text-xs text-rose-400 font-bold">${o.items}</p>
+                            </div>
+                            <label class="flex items-center text-xs ${o.isShipped ? 'text-green-600' : 'text-gray-400'} font-bold">
+                                <input type="checkbox" ${o.isShipped ? 'checked' : ''} onchange="toggleShipped(${o.id})" class="mr-2 w-5 h-5 accent-green-500 cursor-pointer"> ${o.isShipped ? '已出貨' : '待出貨'}
+                            </label>
+                        </div>
+                        <div class="mt-4 grid grid-cols-1 gap-1 text-xs text-gray-500 bg-gray-50 p-3 rounded-xl">
+                            <p><i class="fas fa-store mr-2 w-4"></i>${o.store || '未填寫門市'}</p>
+                            <p><i class="fas fa-barcode mr-2 w-4"></i>單號：${o.orderNum || '未填單號'}</p>
+                        </div>
+                    </div>
+                `;
+            });
         }
     </script>
 </body>
