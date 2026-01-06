@@ -3,316 +3,400 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>代購智慧管家 5.0 | 專業對帳與多販管理</title>
+    <title>代購管家 6.0 | 專業團務自動化系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #fcfafb; padding-bottom: 80px; }
-        .sidebar { background: white; border-right: 1px solid #f1f5f9; transition: all 0.3s; }
-        .glass-card { background: white; border-radius: 1.25rem; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.05); }
-        .status-select { border-radius: 6px; font-size: 11px; font-weight: bold; padding: 2px 6px; outline: none; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #fdfafb; }
+        .sidebar { transition: transform 0.3s ease; z-index: 2000; }
+        .sidebar.hidden-p { transform: translateX(-100%); }
+        .glass-card { background: white; border-radius: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal.active { display: flex; }
-        input[type="number"]::-webkit-inner-spin-button { display: none; }
+        .status-badge { border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: bold; }
     </style>
 </head>
-<body class="flex flex-col md:flex-row min-h-screen">
+<body class="flex min-h-screen overflow-x-hidden">
 
-    <aside class="w-full md:w-72 sidebar p-6 flex flex-col space-y-4 shadow-sm">
-        <div class="flex items-center space-x-2 mb-6">
-            <div class="bg-rose-500 p-2 rounded-lg text-white"><i class="fas fa-clipboard-check"></i></div>
-            <h1 class="text-xl font-bold text-gray-800">代購管家 5.0</h1>
+    <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-72 bg-white shadow-2xl flex flex-col p-6 hidden-p md:relative md:transform-none">
+        <div class="flex items-center justify-between mb-10">
+            <div class="flex items-center space-x-2 text-rose-500">
+                <i class="fas fa-gem text-2xl"></i>
+                <span class="text-xl font-bold text-gray-800">代購管家 6.0</span>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400"><i class="fas fa-times"></i></button>
         </div>
-        
-        <div class="flex-1 overflow-y-auto space-y-2">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2">當前開團清單</p>
-            <div id="groupList" class="space-y-1"></div>
-            <button onclick="addNewGroup()" class="w-full py-3 text-sm text-rose-500 border-2 border-dashed border-rose-100 rounded-xl hover:bg-rose-50 transition font-bold">
+
+        <nav class="flex-1 space-y-2 text-sm font-medium">
+            <button onclick="showPage('dashboard')" class="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-rose-50 text-gray-600 hover:text-rose-600 transition">
+                <i class="fas fa-chart-line"></i><span>總體進度看板</span>
+            </button>
+            <div class="pt-4 pb-2 px-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest">開團中團務</div>
+            <div id="sideGroupList" class="space-y-1"></div>
+            <button onclick="openGroupModal()" class="w-full mt-4 py-3 border-2 border-dashed border-rose-100 rounded-2xl text-rose-400 hover:bg-rose-50 transition">
                 <i class="fas fa-plus-circle mr-2"></i>開啟新團務
             </button>
-        </div>
+        </nav>
 
-        <div class="pt-6 border-t border-gray-100">
-            <button onclick="exportAllData()" class="w-full text-center py-2 text-xs text-gray-400 hover:text-rose-500 transition">
-                <i class="fas fa-database mr-2"></i>導出完整數據備份
-            </button>
+        <div class="pt-6 border-t text-[10px] text-gray-400 text-center">
+            資料存儲於本地瀏覽器
         </div>
     </aside>
 
-    <main class="flex-1 p-4 md:p-10 space-y-6">
-        
-        <div class="flex flex-col md:flex-row gap-6 items-start">
-            <div class="relative flex-1 w-full">
-                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="globalSearch" oninput="searchCustomer()" placeholder="輸入臉書/社群名稱查找「買家歷程」..." 
-                       class="w-full pl-14 pr-6 py-4 glass-card focus:outline-none focus:ring-2 focus:ring-rose-400 text-sm">
+    <main class="flex-1 min-w-0 p-4 md:p-10 relative">
+        <button onclick="toggleSidebar()" class="md:hidden mb-6 p-2 text-gray-600"><i class="fas fa-bars text-xl"></i></button>
+
+        <div id="page-dashboard" class="page-content space-y-6">
+            <div class="flex justify-between items-end">
+                <h2 class="text-2xl font-bold text-gray-800">所有團務進度總覽</h2>
+                <button onclick="exportData()" class="text-xs text-rose-500 font-bold"><i class="fas fa-download mr-1"></i>匯出備份</button>
             </div>
-            <div id="activeGroupHeader" class="glass-card px-6 py-3 flex flex-col items-end min-w-[200px]">
-                <h2 id="curGroupNameDisplay" class="text-lg font-bold text-rose-600">請選擇團務</h2>
-                <p class="text-[10px] text-gray-400 font-mono" id="todayDate">2026-01-07</p>
+            <div class="glass-card overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50 text-gray-400 text-[10px] font-bold">
+                        <tr>
+                            <th class="p-4 uppercase">團務名稱</th>
+                            <th class="p-4 uppercase">目前進度</th>
+                            <th class="p-4 uppercase">更新時間</th>
+                            <th class="p-4 uppercase">附註</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardList" class="divide-y divide-gray-100"></tbody>
+                </table>
             </div>
         </div>
 
-        <div id="searchResultArea" class="hidden space-y-4 animate-in fade-in">
-            <div class="flex justify-between items-center px-2">
-                <h3 class="font-bold text-gray-700 font-lg"><i class="fas fa-id-card-alt mr-2 text-rose-500"></i>買家歷史跟團資料</h3>
-                <button onclick="closeSearch()" class="text-gray-400 hover:text-gray-600 bg-white shadow-sm w-8 h-8 rounded-full"><i class="fas fa-times"></i></button>
+        <div id="page-groupDetail" class="page-content hidden space-y-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 id="currentGroupName" class="text-2xl font-bold text-gray-800">團務名稱</h2>
+                    <p class="text-xs text-gray-400 mt-1">最後更新：<span id="lastUpdateTime">---</span></p>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="openProductStats()" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm">
+                        <i class="fas fa-shopping-cart mr-2"></i>商品統計
+                    </button>
+                    <button onclick="openOrderModal()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-rose-200">
+                        <i class="fas fa-plus mr-2"></i>錄入訂單
+                    </button>
+                </div>
             </div>
-            <div id="customerHistoryContent" class="grid gap-4 md:grid-cols-2"></div>
-        </div>
 
-        <div id="groupContentArea" class="space-y-6">
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div class="glass-card p-4 border-t-4 border-rose-500">
-                    <p class="text-[10px] text-gray-400 mb-1">總重量 (kg)</p>
-                    <input type="number" id="groupWeight" class="w-full font-bold text-lg focus:outline-none" value="0" onchange="updateGroupConfig()">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-card p-4">
+                    <p class="text-[10px] text-gray-400 mb-1">運費單價</p>
+                    <p id="statRate" class="text-xl font-bold text-green-600">$0</p>
                 </div>
-                <div class="glass-card p-4 border-t-4 border-rose-500">
-                    <p class="text-[10px] text-gray-400 mb-1">國際運費</p>
-                    <input type="number" id="groupShip" class="w-full font-bold text-lg text-rose-600 focus:outline-none" value="0" onchange="updateGroupConfig()">
-                </div>
-                <div class="glass-card p-4 text-center">
-                    <p class="text-[10px] text-gray-400 mb-1">運費單價/kg</p>
-                    <p id="groupRate" class="font-bold text-lg text-green-600">$0</p>
-                </div>
-                <div class="glass-card p-4 text-center">
+                <div class="glass-card p-4">
                     <p class="text-[10px] text-gray-400 mb-1">一補應收</p>
-                    <p id="sumTotal" class="font-bold text-lg text-blue-600">$0</p>
+                    <p id="statTotal" class="text-xl font-bold text-rose-500">$0</p>
                 </div>
-                <div class="glass-card p-4 text-center">
-                    <p class="text-[10px] text-gray-400 mb-1">團務總訂單</p>
-                    <p id="groupCount" class="font-bold text-lg text-purple-600">0</p>
+                <div class="glass-card p-4">
+                    <p class="text-[10px] text-gray-400 mb-1">二補總計</p>
+                    <p id="statShip" class="text-xl font-bold text-blue-500">$0</p>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-[10px] text-gray-400 mb-1">進度控制</p>
+                    <select id="groupProgress" onchange="updateGroupProgress(this.value)" class="w-full text-xs font-bold border-none bg-rose-50 rounded p-1 outline-none">
+                        <option>已開團</option><option>已下單</option><option>等待運回中</option><option>已抵台</option>
+                    </select>
                 </div>
             </div>
 
             <div class="glass-card overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs border-collapse">
+                    <table class="w-full text-left text-xs">
                         <thead class="bg-gray-50 text-gray-400 font-bold">
                             <tr>
-                                <th class="p-4 border-b">臉書/社群名稱</th>
-                                <th class="p-4 border-b">購買品項明細</th>
-                                <th class="p-4 border-b">匯款/末5碼/時間</th>
-                                <th class="p-4 border-b">交易</th>
-                                <th class="p-4 border-b">對帳</th>
-                                <th class="p-4 border-b">商品狀態</th>
-                                <th class="p-4 border-b">備註 (含找零)</th>
-                                <th class="p-4 border-b text-center">操作</th>
+                                <th class="p-4">買家 (臉書/社群)</th>
+                                <th class="p-4">品項數量</th>
+                                <th class="p-4">匯款對帳</th>
+                                <th class="p-4">狀態</th>
+                                <th class="p-4">備註</th>
+                                <th class="p-4 text-center">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="orderTable" class="divide-y divide-gray-50"></tbody>
+                        <tbody id="orderList" class="divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <button onclick="openModal()" class="fixed bottom-8 right-8 w-16 h-16 bg-rose-500 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-50 hover:scale-105 transition active:scale-95">
-        <i class="fas fa-plus"></i>
-    </button>
-
-    <div id="orderModal" class="modal">
-        <div class="bg-white rounded-[2rem] w-full max-w-xl p-8 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <i class="fas fa-edit mr-3 text-rose-500"></i>錄入表單資料
-            </h2>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">臉書/社群名稱</label>
-                    <input type="text" id="inName" class="w-full border-2 border-gray-100 rounded-2xl p-3 focus:border-rose-300 outline-none">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">匯款金額</label>
-                    <input type="number" id="inPrice" class="w-full border-2 border-gray-100 rounded-2xl p-3 focus:border-rose-300 outline-none">
+    <div id="groupModal" class="modal">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl mx-4 space-y-6">
+            <h3 class="text-xl font-bold text-gray-800">開啟全新團務</h3>
+            <div class="space-y-4">
+                <input type="text" id="newGroupName" placeholder="例如：2026 美通黑膠團" class="w-full border-2 border-gray-100 rounded-2xl p-4 outline-none focus:border-rose-300">
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-gray-400 ml-1 uppercase">預設商品清單 (設定後可快速點選)</p>
+                    <div id="productDefineArea" class="space-y-2">
+                        <div class="flex space-x-2">
+                            <input type="text" placeholder="商品名稱" class="flex-1 border-b p-2 text-xs">
+                            <input type="number" placeholder="單價" class="w-20 border-b p-2 text-xs">
+                        </div>
+                    </div>
+                    <button onclick="addProductRow()" class="text-[10px] text-rose-500">+ 增加品項</button>
                 </div>
             </div>
-            <div class="space-y-1 mb-4">
-                <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">購買商品明細 (如: 黃版x1, 紅版x2)</label>
-                <textarea id="inItems" class="w-full border-2 border-gray-100 rounded-2xl p-3 h-20 focus:border-rose-300 outline-none"></textarea>
-            </div>
-            <div class="grid grid-cols-3 gap-3 mb-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">交易方式</label>
-                    <select id="inPayMethod" class="w-full border-2 border-gray-100 rounded-2xl p-3 text-xs focus:border-rose-300 outline-none">
-                        <option>匯款</option><option>無卡</option><option>貨付</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">末五碼/無卡</label>
-                    <input type="text" id="inLastFive" class="w-full border-2 border-gray-100 rounded-2xl p-3 text-xs">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">匯款時間</label>
-                    <input type="text" id="inPayTime" placeholder="MM/DD HH:mm" class="w-full border-2 border-gray-100 rounded-2xl p-3 text-xs">
-                </div>
-            </div>
-            <div class="space-y-1 mb-6">
-                <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">備註 (包含無卡找零、二販註記等)</label>
-                <input type="text" id="inMemo" class="w-full border-2 border-gray-100 rounded-2xl p-3 text-xs">
-            </div>
-            <div class="flex space-x-3">
-                <button onclick="closeModal()" class="flex-1 py-4 text-gray-400 font-bold">放棄取消</button>
-                <button onclick="saveOrder()" class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-200">確認存檔</button>
+            <div class="flex space-x-3 pt-4">
+                <button onclick="closeModal('groupModal')" class="flex-1 py-4 text-gray-400 font-bold text-sm">取消</button>
+                <button onclick="createGroup()" class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-200 text-sm">建立團務</button>
             </div>
         </div>
     </div>
 
+    <div id="orderModal" class="modal">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-xl p-8 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center"><i class="fas fa-clipboard-list mr-2 text-rose-500"></i>快速對帳錄入</h3>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <input type="text" id="inName" placeholder="臉書/社群名稱" class="border-2 border-gray-100 rounded-2xl p-4 text-sm outline-none focus:border-rose-300">
+                <input type="date" id="inPayDate" class="border-2 border-gray-100 rounded-2xl p-4 text-sm outline-none focus:border-rose-300">
+            </div>
+            
+            <div class="bg-rose-50 p-6 rounded-3xl mb-6">
+                <p class="text-xs font-bold text-rose-400 mb-4 uppercase">點選購買數量</p>
+                <div id="productSelectArea" class="space-y-3"></div>
+                <div class="mt-6 pt-4 border-t border-rose-100 flex justify-between items-center font-bold">
+                    <span class="text-gray-500">自動計算總金額：</span>
+                    <span id="autoSumPrice" class="text-rose-600 text-lg">$0</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <input type="text" id="inLastFive" placeholder="末五碼 / 無卡" class="border-2 border-gray-100 rounded-xl p-3 text-xs">
+                <select id="inPayMethod" class="border-2 border-gray-100 rounded-xl p-3 text-xs">
+                    <option>匯款</option><option>無卡</option><option>貨付</option>
+                </select>
+            </div>
+            <input type="text" id="inMemo" placeholder="備註 (找零或缺貨註記)" class="w-full border-2 border-gray-100 rounded-xl p-3 text-xs mb-6">
+
+            <div class="flex space-x-3">
+                <button onclick="closeModal('orderModal')" class="flex-1 py-4 text-gray-400 font-bold text-sm">取消</button>
+                <button onclick="saveOrder()" class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-200 text-sm">存檔</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="productStatsModal" class="modal">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl mx-4">
+            <h3 class="text-xl font-bold text-indigo-600 mb-6"><i class="fas fa-calculator mr-2"></i>官網下單總量統計</h3>
+            <div id="productStatsContent" class="space-y-3 divide-y divide-gray-50 text-sm"></div>
+            <button onclick="closeModal('productStatsModal')" class="w-full mt-8 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold text-sm">關閉</button>
+        </div>
+    </div>
+
     <script>
-        let groups = JSON.parse(localStorage.getItem('daigo_v5_db')) || {};
-        let activeGroup = localStorage.getItem('daigo_v5_active') || "";
-        let editId = null;
+        let db = JSON.parse(localStorage.getItem('daigo_v6_db')) || { groups: {}, activeGroupId: "" };
+        let currentEditOrderId = null;
 
         window.onload = () => {
-            document.getElementById('todayDate').innerText = new Date().toISOString().split('T')[0];
-            renderGroupList();
-            if(activeGroup && groups[activeGroup]) loadGroup(activeGroup);
+            renderSidebar();
+            if (db.activeGroupId && db.groups[db.activeGroupId]) {
+                showPage('groupDetail', db.activeGroupId);
+            } else {
+                showPage('dashboard');
+            }
         };
 
-        function renderGroupList() {
-            const list = document.getElementById('groupList');
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden-p'); }
+
+        function showPage(pageId, groupId = "") {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+            
+            if (pageId === 'dashboard') {
+                renderDashboard();
+            } else if (pageId === 'groupDetail') {
+                db.activeGroupId = groupId;
+                saveAll();
+                renderGroupDetail();
+            }
+        }
+
+        // --- 團務管理 ---
+        function openGroupModal() { document.getElementById('groupModal').classList.add('active'); }
+
+        function addProductRow() {
+            const div = document.createElement('div');
+            div.className = 'flex space-x-2';
+            div.innerHTML = `<input type="text" placeholder="商品名稱" class="flex-1 border-b p-2 text-xs product-name"><input type="number" placeholder="單價" class="w-20 border-b p-2 text-xs product-price">`;
+            document.getElementById('productDefineArea').appendChild(div);
+        }
+
+        function createGroup() {
+            const name = document.getElementById('newGroupName').value.trim();
+            if (!name) return;
+            const products = [];
+            document.querySelectorAll('#productDefineArea .flex').forEach(row => {
+                const pName = row.querySelector('.product-name').value;
+                const pPrice = parseInt(row.querySelector('.product-price').value);
+                if (pName) products.push({ name: pName, price: pPrice || 0 });
+            });
+            
+            const id = "g_" + Date.now();
+            db.groups[id] = { id, name, products, orders: [], progress: "已開團", updateTime: new Date().toLocaleString(), weight: 0, shipCost: 0 };
+            saveAll();
+            renderSidebar();
+            closeModal('groupModal');
+            showPage('groupDetail', id);
+        }
+
+        // --- 儀表板與側邊欄 ---
+        function renderSidebar() {
+            const list = document.getElementById('sideGroupList');
             list.innerHTML = '';
-            Object.keys(groups).forEach(name => {
-                const isActive = name === activeGroup;
-                list.innerHTML += `
-                    <div class="flex items-center justify-between p-3 rounded-xl cursor-pointer transition ${isActive ? 'bg-rose-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}" onclick="loadGroup('${name}')">
-                        <span class="text-sm font-bold truncate"><i class="fas fa-folder-open mr-2 opacity-70"></i>${name}</span>
-                        <button onclick="deleteGroup(event, '${name}')" class="text-[10px] opacity-50 hover:opacity-100"><i class="fas fa-trash"></i></button>
+            Object.values(db.groups).forEach(g => {
+                list.innerHTML += `<button onclick="showPage('groupDetail', '${g.id}')" class="w-full text-left p-3 rounded-xl hover:bg-rose-50 text-gray-500 hover:text-rose-500 truncate text-xs font-bold transition">
+                    <i class="fas fa-circle text-[6px] mr-2 opacity-30"></i>${g.name}</button>`;
+            });
+        }
+
+        function renderDashboard() {
+            const tbody = document.getElementById('dashboardList');
+            tbody.innerHTML = '';
+            Object.values(db.groups).forEach(g => {
+                tbody.innerHTML += `<tr>
+                    <td class="p-4 font-bold text-gray-700">${g.name}</td>
+                    <td class="p-4"><span class="status-badge bg-rose-50 text-rose-500">${g.progress}</span></td>
+                    <td class="p-4 text-gray-400 text-[10px]">${g.updateTime}</td>
+                    <td class="p-4 text-gray-400 italic text-[10px]">--</td>
+                </tr>`;
+            });
+        }
+
+        // --- 訂單處理 ---
+        function renderGroupDetail() {
+            const g = db.groups[db.activeGroupId];
+            document.getElementById('currentGroupName').innerText = g.name;
+            document.getElementById('lastUpdateTime').innerText = g.updateTime;
+            document.getElementById('statTotal').innerText = "$" + g.orders.reduce((acc, cur) => acc + cur.price, 0);
+            
+            const tbody = document.getElementById('orderList');
+            tbody.innerHTML = '';
+            g.orders.forEach(o => {
+                tbody.innerHTML += `<tr class="hover:bg-rose-50/20">
+                    <td class="p-4 font-bold">${o.name}</td>
+                    <td class="p-4 text-[10px] text-gray-500">${o.itemsStr}</td>
+                    <td class="p-4">
+                        <div class="font-bold text-rose-600">$${o.price}</div>
+                        <div class="text-[10px] text-gray-400">${o.payDate} | ${o.lastFive}</div>
+                    </td>
+                    <td class="p-4">
+                        <select onchange="updateOrderStatus('${o.id}', 'payStatus', this.value)" class="text-[10px] bg-gray-50 rounded p-1 border-none font-bold">
+                            <option ${o.payStatus==='已對帳'?'selected':''}>已對帳</option>
+                            <option ${o.payStatus==='未對帳'?'selected':''}>未對帳</option>
+                        </select>
+                    </td>
+                    <td class="p-4 italic text-gray-400">${o.memo || '-'}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="deleteOrder('${o.id}')" class="text-gray-200 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function openOrderModal() {
+            const g = db.groups[db.activeGroupId];
+            const selectArea = document.getElementById('productSelectArea');
+            selectArea.innerHTML = '';
+            g.products.forEach((p, idx) => {
+                selectArea.innerHTML += `
+                    <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm">
+                        <span class="text-xs font-bold text-gray-700">${p.name} ($${p.price})</span>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="adjustQty(${idx}, -1)" class="w-8 h-8 rounded-full bg-rose-100 text-rose-500"><i class="fas fa-minus text-[10px]"></i></button>
+                            <span class="qty-val font-mono font-bold" id="qty-${idx}">0</span>
+                            <button onclick="adjustQty(${idx}, 1)" class="w-8 h-8 rounded-full bg-rose-500 text-white shadow-md shadow-rose-200"><i class="fas fa-plus text-[10px]"></i></button>
+                        </div>
                     </div>
                 `;
             });
+            document.getElementById('autoSumPrice').innerText = "$0";
+            document.getElementById('orderModal').classList.add('active');
         }
 
-        function addNewGroup() {
-            const name = prompt("請輸入團務名稱 (例: 2026 官方一販週邊):");
-            if(name && !groups[name]) {
-                groups[name] = { weight: 0, ship: 0, orders: [] };
-                saveAndRefresh(name);
-            }
-        }
-
-        function loadGroup(name) {
-            activeGroup = name;
-            localStorage.setItem('daigo_v5_active', name);
-            const g = groups[name];
-            document.getElementById('curGroupNameDisplay').innerText = name;
-            document.getElementById('groupWeight').value = g.weight;
-            document.getElementById('groupShip').value = g.ship;
-            renderGroupList();
-            renderOrders();
+        function adjustQty(idx, delta) {
+            const qtyEl = document.getElementById(`qty-${idx}`);
+            let qty = parseInt(qtyEl.innerText) + delta;
+            if (qty < 0) qty = 0;
+            qtyEl.innerText = qty;
+            
+            // 即時算總金額
+            const g = db.groups[db.activeGroupId];
+            let sum = 0;
+            g.products.forEach((p, i) => {
+                const q = parseInt(document.getElementById(`qty-${i}`).innerText);
+                sum += p.price * q;
+            });
+            document.getElementById('autoSumPrice').innerText = "$" + sum;
         }
 
         function saveOrder() {
-            if(!activeGroup) return alert("請先開啟一個團務！");
-            const data = {
-                id: editId || Date.now(),
-                name: document.getElementById('inName').value,
-                price: parseFloat(document.getElementById('inPrice').value) || 0,
-                items: document.getElementById('inItems').value,
-                payMethod: document.getElementById('inPayMethod').value,
-                lastFive: document.getElementById('inLastFive').value,
-                payTime: document.getElementById('inPayTime').value,
-                memo: document.getElementById('inMemo').value,
-                weight: editId ? groups[activeGroup].orders.find(x => x.id === editId).weight : 0,
-                payStatus: editId ? groups[activeGroup].orders.find(x => x.id === editId).payStatus : '尚未更新',
-                orderStatus: editId ? groups[activeGroup].orders.find(x => x.id === editId).orderStatus : '尚未更新'
-            };
+            const g = db.groups[db.activeGroupId];
+            const name = document.getElementById('inName').value;
+            if (!name) return alert("請輸入買家名稱");
             
-            if(editId) {
-                const idx = groups[activeGroup].orders.findIndex(x => x.id === editId);
-                groups[activeGroup].orders[idx] = data;
-            } else {
-                groups[activeGroup].orders.push(data);
-            }
-            saveAndRefresh(activeGroup);
-            closeModal();
-        }
-
-        function renderOrders() {
-            if(!activeGroup) return;
-            const tbody = document.getElementById('orderTable');
-            tbody.innerHTML = '';
-            const g = groups[activeGroup];
-            const rate = g.weight > 0 ? (g.ship / g.weight) : 0;
-            let sumPrice = 0;
-
-            g.orders.forEach(o => {
-                sumPrice += o.price;
-                const shipFee = Math.round(o.weight * rate);
-                tbody.innerHTML += `
-                    <tr class="hover:bg-rose-50/30 transition">
-                        <td class="p-4 font-bold text-gray-700">${o.name}</td>
-                        <td class="p-4 text-rose-400 font-medium">${o.items}</td>
-                        <td class="p-4">
-                            <div class="font-mono font-bold">$${o.price}</div>
-                            <div class="text-[10px] text-gray-400">${o.lastFive} | ${o.payTime}</div>
-                        </td>
-                        <td class="p-4"><span class="bg-gray-100 px-2 py-1 rounded text-[10px]">${o.payMethod}</span></td>
-                        <td class="p-4">
-                            <select onchange="updateSubStatus(${o.id}, 'payStatus', this.value)" class="status-select ${o.payStatus==='已對帳'?'bg-blue-500 text-white':'bg-gray-100 text-gray-400'}">
-                                <option ${o.payStatus==='尚未更新'?'selected':''}>尚未更新</option>
-                                <option ${o.payStatus==='已對帳'?'selected':''}>已對帳</option>
-                                <option ${o.payStatus==='需退款'?'selected':''}>需退款</option>
-                            </select>
-                        </td>
-                        <td class="p-4">
-                            <select onchange="updateSubStatus(${o.id}, 'orderStatus', this.value)" class="status-select ${o.orderStatus==='已下單'?'bg-orange-400 text-white':'bg-gray-100 text-gray-400'}">
-                                <option ${o.orderStatus==='尚未更新'?'selected':''}>尚未更新</option>
-                                <option ${o.orderStatus==='已下單'?'selected':''}>已下單</option>
-                                <option ${o.orderStatus==='二販購入'?'selected':''}>二販購入</option>
-                                <option ${o.orderStatus==='缺貨'?'selected':''}>缺貨</option>
-                            </select>
-                        </td>
-                        <td class="p-4 text-gray-500 italic">${o.memo || '-'}</td>
-                        <td class="p-4 text-center space-x-2">
-                            <button onclick="openModal(${o.id})" class="text-blue-300 hover:text-blue-500"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteOrder(${o.id})" class="text-gray-200 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
+            const selectedItems = [];
+            let totalPrice = 0;
+            g.products.forEach((p, i) => {
+                const qty = parseInt(document.getElementById(`qty-${i}`).innerText);
+                if (qty > 0) {
+                    selectedItems.push({ name: p.name, qty });
+                    totalPrice += p.price * qty;
+                }
             });
-            document.getElementById('sumTotal').innerText = `$${sumPrice}`;
-            document.getElementById('groupCount').innerText = g.orders.length;
-            document.getElementById('groupRate').innerText = `$${Math.round(rate)}`;
+
+            const order = {
+                id: "o_" + Date.now(),
+                name,
+                price: totalPrice,
+                payDate: document.getElementById('inPayDate').value,
+                lastFive: document.getElementById('inLastFive').value,
+                payMethod: document.getElementById('inPayMethod').value,
+                memo: document.getElementById('inMemo').value,
+                itemsStr: selectedItems.map(si => `${si.name}x${si.qty}`).join(", "),
+                payStatus: "已對帳",
+                items: selectedItems
+            };
+
+            g.orders.push(order);
+            g.updateTime = new Date().toLocaleString();
+            saveAll();
+            renderGroupDetail();
+            closeModal('orderModal');
         }
 
-        function searchCustomer() {
-            const query = document.getElementById('globalSearch').value.trim();
-            const area = document.getElementById('searchResultArea');
-            const content = document.getElementById('customerHistoryContent');
-            if(!query) { area.classList.add('hidden'); document.getElementById('groupContentArea').classList.remove('hidden'); return; }
-            
-            area.classList.remove('hidden');
-            document.getElementById('groupContentArea').classList.add('hidden');
-            content.innerHTML = '';
-            
-            Object.keys(groups).forEach(gn => {
-                groups[gn].orders.filter(o => o.name.includes(query)).forEach(m => {
-                    content.innerHTML += `
-                        <div class="glass-card p-5 border-l-4 border-rose-500">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-1 rounded font-bold">${gn}</span>
-                                <span class="text-xs font-bold ${m.payStatus==='已對帳'?'text-blue-500':'text-red-400'}">${m.payStatus}</span>
-                            </div>
-                            <h4 class="font-bold text-gray-800">${m.name} <span class="text-xs font-normal text-gray-400">($${m.price})</span></h4>
-                            <p class="text-xs text-rose-400 my-2">${m.items}</p>
-                            <p class="text-[10px] text-gray-400 bg-gray-50 p-2 rounded">備註：${m.memo || '無'}</p>
-                        </div>
-                    `;
+        function openProductStats() {
+            const g = db.groups[db.activeGroupId];
+            const stats = {};
+            g.orders.forEach(o => {
+                o.items.forEach(it => {
+                    stats[it.name] = (stats[it.name] || 0) + it.qty;
                 });
             });
+            
+            const content = document.getElementById('productStatsContent');
+            content.innerHTML = '';
+            Object.entries(stats).forEach(([name, total]) => {
+                content.innerHTML += `<div class="flex justify-between py-2"><span class="font-bold text-gray-600">${name}</span><span class="text-indigo-600 font-mono font-bold">${total} 份</span></div>`;
+            });
+            if (content.innerHTML === '') content.innerHTML = '<p class="text-center text-gray-400">尚無購買資料</p>';
+            document.getElementById('productStatsModal').classList.add('active');
         }
 
-        function updateSubStatus(id, field, val) { groups[activeGroup].orders.find(x => x.id === id)[field] = val; saveAll(); renderOrders(); }
-        function updateGroupConfig() { groups[activeGroup].weight = parseFloat(document.getElementById('groupWeight').value) || 0; groups[activeGroup].ship = parseFloat(document.getElementById('groupShip').value) || 0; saveAll(); renderOrders(); }
-        function saveAll() { localStorage.setItem('daigo_v5_db', JSON.stringify(groups)); }
-        function saveAndRefresh(name) { saveAll(); loadGroup(name); }
-        function openModal(id = null) { editId = id; if(id) { const o = groups[activeGroup].orders.find(x => x.id === id); document.getElementById('inName').value = o.name; document.getElementById('inPrice').value = o.price; document.getElementById('inItems').value = o.items; document.getElementById('inPayMethod').value = o.payMethod; document.getElementById('inLastFive').value = o.lastFive; document.getElementById('inPayTime').value = o.payTime; document.getElementById('inMemo').value = o.memo; } document.getElementById('orderModal').classList.add('active'); }
-        function closeModal() { document.getElementById('orderModal').classList.remove('active'); document.querySelectorAll('#orderModal input, #orderModal textarea').forEach(i => i.value = ''); editId = null; }
-        function closeSearch() { document.getElementById('globalSearch').value = ''; searchCustomer(); }
-        function deleteGroup(e, name) { e.stopPropagation(); if(confirm(`確定刪除「${name}」？`)) { delete groups[name]; if(activeGroup===name) activeGroup=""; saveAll(); location.reload(); }}
-        function deleteOrder(id) { if(confirm("刪除此訂單？")) { groups[activeGroup].orders = groups[activeGroup].orders.filter(x=>x.id!==id); saveAll(); renderOrders(); }}
-        function exportAllData() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(groups)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", "full_backup.json"); dlAnchorElem.click(); }
+        // --- 工具 ---
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function saveAll() { localStorage.setItem('daigo_v6_db', JSON.stringify(db)); }
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "daigo_backup_v6.json");
+            dlAnchorElem.click();
+        }
+        function deleteOrder(id) { if(confirm("確定刪除訂單？")) { db.groups[db.activeGroupId].orders = db.groups[db.activeGroupId].orders.filter(o => o.id !== id); saveAll(); renderGroupDetail(); }}
     </script>
 </body>
 </html>
