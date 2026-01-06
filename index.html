@@ -3,126 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>代購結帳與團務系統</title>
+    <title>團務管理系統 | 管理後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #fff9f9; font-family: sans-serif; }
-        .pink-card { background: white; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(255, 182, 193, 0.3); }
-        .accent-pink { background-color: #ffe4e6; color: #e11d48; }
-        .btn-pink { background-color: #fb7185; color: white; transition: 0.3s; }
-        .btn-pink:hover { background-color: #e11d48; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #fffafa; }
+        .card { background: white; border-radius: 1.5rem; box-shadow: 0 4px 20px rgba(255, 182, 193, 0.2); }
+        .tab-btn.active { background-color: #fb7185; color: white; }
+        .status-tag { padding: 2px 8px; border-radius: 999px; font-size: 11px; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="pb-10">
 
-    <div class="max-w-md mx-auto space-y-6">
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-700">連線代購結帳系統</h1>
-            <button onclick="location.reload()" class="text-xs text-gray-400 border px-2 py-1 rounded">清空全部</button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <div class="pink-card p-4 text-center">
-                <p class="text-xs text-gray-500 mb-1">總銷售額</p>
-                <p class="text-xl font-bold text-rose-600" id="totalSales">$0</p>
-            </div>
-            <div class="pink-card p-4 text-center">
-                <p class="text-xs text-gray-500 mb-1">總利潤</p>
-                <p class="text-xl font-bold text-green-600" id="totalProfit">$0</p>
+    <nav class="p-6">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-rose-500"><i class="fas fa-heart mr-2"></i>團務管家</h1>
+            <div class="text-right">
+                <p class="text-sm font-bold text-gray-700">東蛋場周團 🇯🇵</p>
+                <p id="remind-box" class="text-xs text-gray-400">官方預計：2026/02/15</p>
             </div>
         </div>
+    </nav>
 
-        <div class="pink-card p-2 flex space-x-2">
-            <button class="flex-1 py-2 text-sm font-bold btn-pink rounded-xl">結帳計算</button>
-            <button class="flex-1 py-2 text-sm font-bold text-gray-400">團務進度</button>
-        </div>
+    <main class="max-w-4xl mx-auto px-4 space-y-6">
 
-        <div class="pink-card p-6 space-y-4">
-            <div>
-                <label class="text-xs text-gray-400 ml-1">請輸入客戶姓名...</label>
-                <input type="text" id="custName" class="w-full border-b border-pink-100 p-2 focus:outline-none focus:border-rose-400" placeholder="例如：王小明">
-            </div>
-
-            <div class="space-y-3">
-                <div class="flex space-x-2">
-                    <input type="text" id="itemName" placeholder="商品名稱" class="flex-2 w-full text-sm border rounded-lg p-2 bg-gray-50">
-                    <input type="number" id="itemPrice" placeholder="單價" class="flex-1 w-24 text-sm border rounded-lg p-2 bg-gray-50">
+        <section class="card p-5 space-y-4 border-t-4 border-rose-400">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="p-2 border-r">
+                    <p class="text-[10px] text-gray-400">總重量</p>
+                    <p class="font-bold text-gray-700">12.5 kg</p>
                 </div>
-                <div class="flex space-x-2 text-xs">
-                    <input type="number" id="itemCost" placeholder="成本" class="flex-1 border rounded-lg p-2">
-                    <input type="number" id="itemQty" placeholder="數量" value="1" class="flex-1 border rounded-lg p-2">
+                <div class="p-2 border-r">
+                    <p class="text-[10px] text-gray-400">國際總運費</p>
+                    <p class="font-bold text-rose-500">$2,850</p>
                 </div>
-                <button onclick="addItem()" class="w-full btn-pink py-2 rounded-xl font-bold text-sm">+ 新增商品</button>
+                <div class="p-2 border-r">
+                    <p class="text-[10px] text-gray-400">目前進度</p>
+                    <span class="status-tag bg-blue-100 text-blue-600">官方出貨中</span>
+                </div>
+                <div class="p-2">
+                    <p class="text-[10px] text-gray-400">單位運費</p>
+                    <p class="font-bold text-green-600">$228/kg</p>
+                </div>
+            </div>
+            <div class="flex justify-between text-[10px] text-gray-400 pt-2 border-t">
+                <span class="text-rose-500 font-bold">已下單</span>
+                <span class="text-rose-500 font-bold">官方出貨</span>
+                <span>抵集運倉</span>
+                <span>已回台</span>
+            </div>
+            <div class="w-full bg-gray-100 h-1.5 rounded-full">
+                <div class="bg-rose-400 h-1.5 rounded-full" style="width: 50%"></div>
+            </div>
+        </section>
+
+        <div class="flex space-x-2 bg-rose-50 p-1 rounded-2xl">
+            <button onclick="switchTab('order')" id="tab-order" class="tab-btn active flex-1 py-2 rounded-xl text-sm font-bold transition">對帳清單</button>
+            <button onclick="switchTab('ship')" id="tab-ship" class="tab-btn flex-1 py-2 rounded-xl text-sm font-bold text-rose-300 transition">賣貨便出貨</button>
+        </div>
+
+        <div id="content-order" class="space-y-4">
+            <div class="card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-rose-50 text-rose-500 text-[10px]">
+                            <tr>
+                                <th class="p-4">喊單者/品項</th>
+                                <th class="p-4">總金額/方式</th>
+                                <th class="p-4">收款</th>
+                                <th class="p-4">狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-rose-50">
+                            <tr>
+                                <td class="p-4">
+                                    <div class="font-bold text-gray-700">王小明 (min_01)</div>
+                                    <div class="text-[10px] text-gray-400 italic">應援棒x1, 毛巾x2</div>
+                                </td>
+                                <td class="p-4">
+                                    <div class="font-bold">$3,250</div>
+                                    <div class="text-[10px] text-blue-400">匯款</div>
+                                </td>
+                                <td class="p-4">
+                                    <input type="checkbox" checked class="w-4 h-4 accent-rose-500">
+                                </td>
+                                <td class="p-4 text-[10px]">
+                                    <select class="border rounded bg-white p-1">
+                                        <option>已下單</option>
+                                        <option>缺貨</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr class="bg-gray-50/50">
+                                <td class="p-4 opacity-60">
+                                    <div class="font-bold text-gray-700">陳大華 (hwa_88)</div>
+                                    <div class="text-[10px] text-gray-400 italic">隨機小卡x10</div>
+                                </td>
+                                <td class="p-4 opacity-60">
+                                    <div class="font-bold">$1,500</div>
+                                    <div class="text-[10px] text-purple-400">無卡</div>
+                                </td>
+                                <td class="p-4">
+                                    <input type="checkbox" class="w-4 h-4 accent-rose-500">
+                                </td>
+                                <td class="p-4 text-[10px]">
+                                    <span class="text-red-500 font-bold">缺貨</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <div id="orderList" class="space-y-3">
+        <div id="content-ship" class="hidden space-y-4">
+            <div class="grid gap-4">
+                <div class="card p-5 border-l-8 border-orange-400">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] text-orange-500 font-bold">賣貨便訂單</span>
+                            <h3 class="font-bold text-gray-700">王小明</h3>
+                        </div>
+                        <label class="flex items-center text-xs text-gray-400">
+                            <input type="checkbox" class="mr-2 w-4 h-4 accent-green-500"> 已出貨
+                        </label>
+                    </div>
+                    <div class="mt-3 text-xs space-y-1 text-gray-500">
+                        <p><i class="fas fa-store mr-2"></i>7-11 新中環門市 (123456)</p>
+                        <p><i class="fas fa-list-ul mr-2"></i>應援棒x1, 毛巾x2</p>
+                        <p><i class="fas fa-barcode mr-2"></i>單號：C202401060001</p>
+                    </div>
+                    <p class="text-[10px] text-right mt-2 text-gray-300">下單日期：2026/01/05</p>
+                </div>
             </div>
-
-        <div class="fixed bottom-6 left-0 right-0 px-4">
-            <button onclick="copyBill()" class="w-full max-w-md mx-auto block bg-gray-800 text-white py-4 rounded-2xl shadow-xl font-bold flex justify-center items-center space-x-2">
-                <i class="far fa-copy"></i>
-                <span>一鍵複製對帳單給客戶</span>
-            </button>
         </div>
-    </div>
+
+    </main>
 
     <script>
-        let items = [];
-        function addItem() {
-            const name = document.getElementById('itemName').value;
-            const price = Number(document.getElementById('itemPrice').value);
-            const cost = Number(document.getElementById('itemCost').value);
-            const qty = Number(document.getElementById('itemQty').value);
+        // 切換分頁邏輯
+        function switchTab(tab) {
+            const orderTab = document.getElementById('tab-order');
+            const shipTab = document.getElementById('tab-ship');
+            const orderContent = document.getElementById('content-order');
+            const shipContent = document.getElementById('content-ship');
 
-            if(!name || !price) return alert("請填寫名稱與價格");
-
-            items.push({ name, price, cost, qty });
-            render();
-            
-            // 清空輸入欄
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemPrice').value = '';
-            document.getElementById('itemCost').value = '';
+            if (tab === 'order') {
+                orderTab.classList.add('active');
+                shipTab.classList.remove('active');
+                orderContent.classList.remove('hidden');
+                shipContent.classList.add('hidden');
+            } else {
+                shipTab.classList.add('active');
+                orderTab.classList.remove('active');
+                shipContent.classList.remove('hidden');
+                orderContent.classList.add('hidden');
+            }
         }
 
-        function render() {
-            const list = document.getElementById('orderList');
-            list.innerHTML = '';
-            let total = 0;
-            let profit = 0;
+        // 模擬日期檢查提醒
+        const preOrderDate = new Date('2026-02-15');
+        const today = new Date();
+        const diffTime = preOrderDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            items.forEach((item, index) => {
-                total += item.price * item.qty;
-                profit += (item.price - item.cost) * item.qty;
-                list.innerHTML += `
-                    <div class="pink-card p-4 flex justify-between items-center animate-fade-in">
-                        <div>
-                            <p class="font-bold text-gray-700">${item.name}</p>
-                            <p class="text-xs text-gray-400">$${item.price} x ${item.qty}</p>
-                        </div>
-                        <p class="font-bold text-rose-500">$${item.price * item.qty}</p>
-                    </div>
-                `;
-            });
-
-            document.getElementById('totalSales').innerText = '$' + total;
-            document.getElementById('totalProfit').innerText = '$' + profit;
-        }
-
-        function copyBill() {
-            const name = document.getElementById('custName').value || "親愛的客戶";
-            let billText = `✨ ${name} 的對帳單 ✨\n------------------\n`;
-            let total = 0;
-            items.forEach(item => {
-                billText += `🔹 ${item.name} ($${item.price}) x ${item.qty}\n`;
-                total += item.price * item.qty;
-            });
-            billText += `------------------\n💰 總金額：$${total}\n\n✅ 確認無誤請回覆並完成匯款，謝謝您！`;
-            
-            navigator.clipboard.writeText(billText);
-            alert("對帳單已複製到剪貼簿！可以去貼給客人了。");
+        if (diffDays <= 7) {
+            const remindBox = document.getElementById('remind-box');
+            remindBox.classList.remove('text-gray-400');
+            remindBox.classList.add('text-red-500', 'font-bold', 'animate-pulse');
+            remindBox.innerHTML = `⚠️ 官方即將出貨！剩餘 ${diffDays} 天`;
         }
     </script>
 </body>
