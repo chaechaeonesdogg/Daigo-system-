@@ -3,138 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>代購智慧管家 4.0 | 多團管理與客戶檢索</title>
+    <title>代購智慧管家 5.0 | 專業對帳與多販管理</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; padding-bottom: 80px; }
-        .sidebar { background: white; border-right: 1px solid #e2e8f0; }
-        .glass-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .tab-active { border-bottom: 3px solid #f43f5e; color: #f43f5e; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #fcfafb; padding-bottom: 80px; }
+        .sidebar { background: white; border-right: 1px solid #f1f5f9; transition: all 0.3s; }
+        .glass-card { background: white; border-radius: 1.25rem; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.05); }
+        .status-select { border-radius: 6px; font-size: 11px; font-weight: bold; padding: 2px 6px; outline: none; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal.active { display: flex; }
+        input[type="number"]::-webkit-inner-spin-button { display: none; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row min-h-screen">
 
-    <aside class="w-full md:w-64 sidebar p-6 flex flex-col space-y-4">
-        <h1 class="text-xl font-bold text-rose-500 mb-4"><i class="fas fa-box-open mr-2"></i>代購管家 4.0</h1>
+    <aside class="w-full md:w-72 sidebar p-6 flex flex-col space-y-4 shadow-sm">
+        <div class="flex items-center space-x-2 mb-6">
+            <div class="bg-rose-500 p-2 rounded-lg text-white"><i class="fas fa-clipboard-check"></i></div>
+            <h1 class="text-xl font-bold text-gray-800">代購管家 5.0</h1>
+        </div>
         
-        <div class="space-y-2">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">我的團務清單</p>
-            <div id="groupList" class="space-y-1">
-                </div>
-            <button onclick="addNewGroup()" class="w-full py-2 text-sm text-rose-500 border border-dashed border-rose-300 rounded-xl hover:bg-rose-50 transition">
-                + 新增團務
+        <div class="flex-1 overflow-y-auto space-y-2">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2">當前開團清單</p>
+            <div id="groupList" class="space-y-1"></div>
+            <button onclick="addNewGroup()" class="w-full py-3 text-sm text-rose-500 border-2 border-dashed border-rose-100 rounded-xl hover:bg-rose-50 transition font-bold">
+                <i class="fas fa-plus-circle mr-2"></i>開啟新團務
             </button>
         </div>
 
-        <div class="mt-auto pt-6 border-t">
-            <button onclick="exportAllData()" class="w-full text-left text-xs text-gray-400 hover:text-gray-600">
-                <i class="fas fa-download mr-2"></i>備份全部資料
+        <div class="pt-6 border-t border-gray-100">
+            <button onclick="exportAllData()" class="w-full text-center py-2 text-xs text-gray-400 hover:text-rose-500 transition">
+                <i class="fas fa-database mr-2"></i>導出完整數據備份
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 p-4 md:p-8 space-y-6">
+    <main class="flex-1 p-4 md:p-10 space-y-6">
         
-        <div class="flex flex-col md:flex-row gap-4 items-center">
+        <div class="flex flex-col md:flex-row gap-6 items-start">
             <div class="relative flex-1 w-full">
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="globalSearch" oninput="searchCustomer()" placeholder="輸入客人名稱調閱「買家病歷」..." 
-                       class="w-full pl-12 pr-4 py-3 glass-card focus:outline-none focus:ring-2 focus:ring-rose-400">
+                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="globalSearch" oninput="searchCustomer()" placeholder="輸入臉書/社群名稱查找「買家歷程」..." 
+                       class="w-full pl-14 pr-6 py-4 glass-card focus:outline-none focus:ring-2 focus:ring-rose-400 text-sm">
             </div>
-            <div id="activeGroupHeader" class="hidden md:flex flex-col items-end">
-                <h2 id="curGroupNameDisplay" class="text-xl font-bold text-gray-800">未選擇團務</h2>
-                <p class="text-xs text-gray-400">目前管理中</p>
+            <div id="activeGroupHeader" class="glass-card px-6 py-3 flex flex-col items-end min-w-[200px]">
+                <h2 id="curGroupNameDisplay" class="text-lg font-bold text-rose-600">請選擇團務</h2>
+                <p class="text-[10px] text-gray-400 font-mono" id="todayDate">2026-01-07</p>
             </div>
         </div>
 
-        <div id="searchResultArea" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 class="font-bold text-gray-600"><i class="fas fa-history mr-2"></i>買家過往跟團紀錄</h3>
-                <button onclick="closeSearch()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        <div id="searchResultArea" class="hidden space-y-4 animate-in fade-in">
+            <div class="flex justify-between items-center px-2">
+                <h3 class="font-bold text-gray-700 font-lg"><i class="fas fa-id-card-alt mr-2 text-rose-500"></i>買家歷史跟團資料</h3>
+                <button onclick="closeSearch()" class="text-gray-400 hover:text-gray-600 bg-white shadow-sm w-8 h-8 rounded-full"><i class="fas fa-times"></i></button>
             </div>
-            <div id="customerHistoryContent" class="grid gap-4 md:grid-cols-2">
-                </div>
+            <div id="customerHistoryContent" class="grid gap-4 md:grid-cols-2"></div>
         </div>
 
         <div id="groupContentArea" class="space-y-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass-card p-4">
-                    <p class="text-[10px] text-gray-400">團務總重</p>
-                    <input type="number" id="groupWeight" class="w-full font-bold text-lg" value="0" onchange="updateGroupConfig()">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="glass-card p-4 border-t-4 border-rose-500">
+                    <p class="text-[10px] text-gray-400 mb-1">總重量 (kg)</p>
+                    <input type="number" id="groupWeight" class="w-full font-bold text-lg focus:outline-none" value="0" onchange="updateGroupConfig()">
                 </div>
-                <div class="glass-card p-4">
-                    <p class="text-[10px] text-gray-400">國際總運費</p>
-                    <input type="number" id="groupShip" class="w-full font-bold text-lg text-rose-500" value="0" onchange="updateGroupConfig()">
-                </div>
-                <div class="glass-card p-4 text-center">
-                    <p class="text-[10px] text-gray-400">運費單價</p>
-                    <p id="groupRate" class="font-bold text-lg text-green-600">$0/kg</p>
+                <div class="glass-card p-4 border-t-4 border-rose-500">
+                    <p class="text-[10px] text-gray-400 mb-1">國際運費</p>
+                    <input type="number" id="groupShip" class="w-full font-bold text-lg text-rose-600 focus:outline-none" value="0" onchange="updateGroupConfig()">
                 </div>
                 <div class="glass-card p-4 text-center">
-                    <p class="text-[10px] text-gray-400">訂單總數</p>
-                    <p id="groupCount" class="font-bold text-lg text-blue-600">0</p>
+                    <p class="text-[10px] text-gray-400 mb-1">運費單價/kg</p>
+                    <p id="groupRate" class="font-bold text-lg text-green-600">$0</p>
+                </div>
+                <div class="glass-card p-4 text-center">
+                    <p class="text-[10px] text-gray-400 mb-1">一補應收</p>
+                    <p id="sumTotal" class="font-bold text-lg text-blue-600">$0</p>
+                </div>
+                <div class="glass-card p-4 text-center">
+                    <p class="text-[10px] text-gray-400 mb-1">團務總訂單</p>
+                    <p id="groupCount" class="font-bold text-lg text-purple-600">0</p>
                 </div>
             </div>
 
             <div class="glass-card overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-50 text-gray-500 uppercase text-[10px]">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-gray-50 text-gray-400 font-bold">
                             <tr>
-                                <th class="p-4">買家名稱</th>
-                                <th class="p-4">品項數量</th>
-                                <th class="p-4">總金額</th>
-                                <th class="p-4">重量(kg)</th>
-                                <th class="p-4">二補金額</th>
-                                <th class="p-4">狀態</th>
-                                <th class="p-4">操作</th>
+                                <th class="p-4 border-b">臉書/社群名稱</th>
+                                <th class="p-4 border-b">購買品項明細</th>
+                                <th class="p-4 border-b">匯款/末5碼/時間</th>
+                                <th class="p-4 border-b">交易</th>
+                                <th class="p-4 border-b">對帳</th>
+                                <th class="p-4 border-b">商品狀態</th>
+                                <th class="p-4 border-b">備註 (含找零)</th>
+                                <th class="p-4 border-b text-center">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="orderTable" class="divide-y divide-gray-100"></tbody>
+                        <tbody id="orderTable" class="divide-y divide-gray-50"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <button onclick="openModal()" class="fixed bottom-6 right-6 w-14 h-14 bg-rose-500 text-white rounded-full shadow-xl flex items-center justify-center text-2xl z-50">
+    <button onclick="openModal()" class="fixed bottom-8 right-8 w-16 h-16 bg-rose-500 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-50 hover:scale-105 transition active:scale-95">
         <i class="fas fa-plus"></i>
     </button>
 
     <div id="orderModal" class="modal">
-        <div class="bg-white rounded-3xl w-full max-w-md p-6 space-y-4 mx-4">
-            <h2 class="text-xl font-bold">新增/編輯訂單</h2>
-            <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="inName" placeholder="買家名稱" class="border rounded-xl p-3 text-sm">
-                <input type="number" id="inPrice" placeholder="一補金額" class="border rounded-xl p-3 text-sm">
+        <div class="bg-white rounded-[2rem] w-full max-w-xl p-8 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-edit mr-3 text-rose-500"></i>錄入表單資料
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">臉書/社群名稱</label>
+                    <input type="text" id="inName" class="w-full border-2 border-gray-100 rounded-2xl p-3 focus:border-rose-300 outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">匯款金額</label>
+                    <input type="number" id="inPrice" class="w-full border-2 border-gray-100 rounded-2xl p-3 focus:border-rose-300 outline-none">
+                </div>
             </div>
-            <textarea id="inItems" placeholder="品項明細" class="w-full border rounded-xl p-3 text-sm h-20"></textarea>
-            <div class="grid grid-cols-2 gap-2">
-                <input type="number" id="inWeight" step="0.01" placeholder="重量(kg)" class="border rounded-xl p-3 text-sm">
-                <input type="text" id="inStore" placeholder="取件門市" class="border rounded-xl p-3 text-sm">
+            <div class="space-y-1 mb-4">
+                <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">購買商品明細 (如: 黃版x1, 紅版x2)</label>
+                <textarea id="inItems" class="w-full border-2 border-gray-100 rounded-2xl p-3 h-20 focus:border-rose-300 outline-none"></textarea>
             </div>
-            <div class="flex space-x-2">
-                <button onclick="closeModal()" class="flex-1 py-3 text-gray-400">取消</button>
-                <button onclick="saveOrder()" class="flex-1 py-3 bg-rose-500 text-white rounded-xl font-bold">儲存</button>
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">交易方式</label>
+                    <select id="inPayMethod" class="w-full border-2 border-gray-100 rounded-2xl p-3 text-xs focus:border-rose-300 outline-none">
+                        <option>匯款</option><option>無卡</option><option>貨付</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">末五碼/無卡</label>
+                    <input type="text" id="inLastFive" class="w-full border-2 border-gray-100 rounded-2xl p-3 text-xs">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">匯款時間</label>
+                    <input type="text" id="inPayTime" placeholder="MM/DD HH:mm" class="w-full border-2 border-gray-100 rounded-2xl p-3 text-xs">
+                </div>
+            </div>
+            <div class="space-y-1 mb-6">
+                <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">備註 (包含無卡找零、二販註記等)</label>
+                <input type="text" id="inMemo" class="w-full border-2 border-gray-100 rounded-2xl p-3 text-xs">
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeModal()" class="flex-1 py-4 text-gray-400 font-bold">放棄取消</button>
+                <button onclick="saveOrder()" class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-200">確認存檔</button>
             </div>
         </div>
     </div>
 
     <script>
-        // 資料結構: groups = { "東蛋": { weight: 0, ship: 0, orders: [] }, ... }
-        let groups = JSON.parse(localStorage.getItem('daigo_v4_data')) || {};
-        let activeGroup = localStorage.getItem('daigo_v4_active') || "";
+        let groups = JSON.parse(localStorage.getItem('daigo_v5_db')) || {};
+        let activeGroup = localStorage.getItem('daigo_v5_active') || "";
         let editId = null;
 
         window.onload = () => {
+            document.getElementById('todayDate').innerText = new Date().toISOString().split('T')[0];
             renderGroupList();
-            if(activeGroup && groups[activeGroup]) {
-                loadGroup(activeGroup);
-            }
+            if(activeGroup && groups[activeGroup]) loadGroup(activeGroup);
         };
 
         function renderGroupList() {
@@ -143,82 +175,56 @@
             Object.keys(groups).forEach(name => {
                 const isActive = name === activeGroup;
                 list.innerHTML += `
-                    <div class="group flex items-center justify-between p-2 rounded-lg cursor-pointer ${isActive ? 'bg-rose-50 text-rose-600 font-bold' : 'text-gray-500 hover:bg-gray-100'}" 
-                         onclick="loadGroup('${name}')">
-                        <span class="truncate"><i class="fas fa-folder mr-2"></i>${name}</span>
-                        <button onclick="deleteGroup(event, '${name}')" class="text-gray-300 hover:text-red-500 text-[10px]"><i class="fas fa-trash"></i></button>
+                    <div class="flex items-center justify-between p-3 rounded-xl cursor-pointer transition ${isActive ? 'bg-rose-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}" onclick="loadGroup('${name}')">
+                        <span class="text-sm font-bold truncate"><i class="fas fa-folder-open mr-2 opacity-70"></i>${name}</span>
+                        <button onclick="deleteGroup(event, '${name}')" class="text-[10px] opacity-50 hover:opacity-100"><i class="fas fa-trash"></i></button>
                     </div>
                 `;
             });
         }
 
         function addNewGroup() {
-            const name = prompt("請輸入新團務名稱 (例如: 2月韓國文創團):");
+            const name = prompt("請輸入團務名稱 (例: 2026 官方一販週邊):");
             if(name && !groups[name]) {
                 groups[name] = { weight: 0, ship: 0, orders: [] };
-                saveAll();
-                loadGroup(name);
-            }
-        }
-
-        function deleteGroup(e, name) {
-            e.stopPropagation();
-            if(confirm(`確定刪除「${name}」的所有資料嗎？`)) {
-                delete groups[name];
-                if(activeGroup === name) activeGroup = "";
-                saveAll();
-                location.reload();
+                saveAndRefresh(name);
             }
         }
 
         function loadGroup(name) {
             activeGroup = name;
-            localStorage.setItem('daigo_v4_active', name);
+            localStorage.setItem('daigo_v5_active', name);
             const g = groups[name];
             document.getElementById('curGroupNameDisplay').innerText = name;
             document.getElementById('groupWeight').value = g.weight;
             document.getElementById('groupShip').value = g.ship;
             renderGroupList();
             renderOrders();
-            calculateRate();
-        }
-
-        function calculateRate() {
-            const g = groups[activeGroup];
-            const rate = g.weight > 0 ? Math.round(g.ship / g.weight) : 0;
-            document.getElementById('groupRate').innerText = `$${rate}/kg`;
-        }
-
-        function updateGroupConfig() {
-            if(!activeGroup) return;
-            groups[activeGroup].weight = parseFloat(document.getElementById('groupWeight').value) || 0;
-            groups[activeGroup].ship = parseFloat(document.getElementById('groupShip').value) || 0;
-            saveAll();
-            calculateRate();
-            renderOrders();
         }
 
         function saveOrder() {
-            if(!activeGroup) return alert("請先選擇或建立一個團務");
+            if(!activeGroup) return alert("請先開啟一個團務！");
             const data = {
                 id: editId || Date.now(),
                 name: document.getElementById('inName').value,
                 price: parseFloat(document.getElementById('inPrice').value) || 0,
                 items: document.getElementById('inItems').value,
-                weight: parseFloat(document.getElementById('inWeight').value) || 0,
-                store: document.getElementById('inStore').value,
-                status: editId ? groups[activeGroup].orders.find(x => x.id === editId).status : '已喊單'
+                payMethod: document.getElementById('inPayMethod').value,
+                lastFive: document.getElementById('inLastFive').value,
+                payTime: document.getElementById('inPayTime').value,
+                memo: document.getElementById('inMemo').value,
+                weight: editId ? groups[activeGroup].orders.find(x => x.id === editId).weight : 0,
+                payStatus: editId ? groups[activeGroup].orders.find(x => x.id === editId).payStatus : '尚未更新',
+                orderStatus: editId ? groups[activeGroup].orders.find(x => x.id === editId).orderStatus : '尚未更新'
             };
-
+            
             if(editId) {
                 const idx = groups[activeGroup].orders.findIndex(x => x.id === editId);
                 groups[activeGroup].orders[idx] = data;
             } else {
                 groups[activeGroup].orders.push(data);
             }
-
-            saveAll();
-            renderOrders();
+            saveAndRefresh(activeGroup);
             closeModal();
         }
 
@@ -228,125 +234,85 @@
             tbody.innerHTML = '';
             const g = groups[activeGroup];
             const rate = g.weight > 0 ? (g.ship / g.weight) : 0;
-            
-            document.getElementById('groupCount').innerText = g.orders.length;
+            let sumPrice = 0;
 
             g.orders.forEach(o => {
+                sumPrice += o.price;
                 const shipFee = Math.round(o.weight * rate);
                 tbody.innerHTML += `
-                    <tr>
-                        <td class="p-4 font-bold">${o.name}</td>
-                        <td class="p-4 text-xs text-gray-500">${o.items}</td>
-                        <td class="p-4 font-bold text-rose-500">$${o.price}</td>
-                        <td class="p-4"><input type="number" step="0.01" value="${o.weight}" onchange="updateRowWeight(${o.id}, this.value)" class="w-16 border rounded p-1"></td>
-                        <td class="p-4 text-green-600 font-bold">$${shipFee}</td>
+                    <tr class="hover:bg-rose-50/30 transition">
+                        <td class="p-4 font-bold text-gray-700">${o.name}</td>
+                        <td class="p-4 text-rose-400 font-medium">${o.items}</td>
                         <td class="p-4">
-                            <select onchange="updateRowStatus(${o.id}, this.value)" class="bg-gray-100 rounded p-1 text-xs">
-                                <option ${o.status==='已喊單'?'selected':''}>已喊單</option>
-                                <option ${o.status==='已對帳'?'selected':''}>已對帳</option>
-                                <option ${o.status==='二補中'?'selected':''}>二補中</option>
-                                <option ${o.status==='已出貨'?'selected':''}>已出貨</option>
+                            <div class="font-mono font-bold">$${o.price}</div>
+                            <div class="text-[10px] text-gray-400">${o.lastFive} | ${o.payTime}</div>
+                        </td>
+                        <td class="p-4"><span class="bg-gray-100 px-2 py-1 rounded text-[10px]">${o.payMethod}</span></td>
+                        <td class="p-4">
+                            <select onchange="updateSubStatus(${o.id}, 'payStatus', this.value)" class="status-select ${o.payStatus==='已對帳'?'bg-blue-500 text-white':'bg-gray-100 text-gray-400'}">
+                                <option ${o.payStatus==='尚未更新'?'selected':''}>尚未更新</option>
+                                <option ${o.payStatus==='已對帳'?'selected':''}>已對帳</option>
+                                <option ${o.payStatus==='需退款'?'selected':''}>需退款</option>
                             </select>
                         </td>
-                        <td class="p-4 text-gray-300">
-                            <button onclick="openModal(${o.id})" class="mr-2 hover:text-blue-500"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteOrder(${o.id})" class="hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        <td class="p-4">
+                            <select onchange="updateSubStatus(${o.id}, 'orderStatus', this.value)" class="status-select ${o.orderStatus==='已下單'?'bg-orange-400 text-white':'bg-gray-100 text-gray-400'}">
+                                <option ${o.orderStatus==='尚未更新'?'selected':''}>尚未更新</option>
+                                <option ${o.orderStatus==='已下單'?'selected':''}>已下單</option>
+                                <option ${o.orderStatus==='二販購入'?'selected':''}>二販購入</option>
+                                <option ${o.orderStatus==='缺貨'?'selected':''}>缺貨</option>
+                            </select>
+                        </td>
+                        <td class="p-4 text-gray-500 italic">${o.memo || '-'}</td>
+                        <td class="p-4 text-center space-x-2">
+                            <button onclick="openModal(${o.id})" class="text-blue-300 hover:text-blue-500"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteOrder(${o.id})" class="text-gray-200 hover:text-red-500"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             });
+            document.getElementById('sumTotal').innerText = `$${sumPrice}`;
+            document.getElementById('groupCount').innerText = g.orders.length;
+            document.getElementById('groupRate').innerText = `$${Math.round(rate)}`;
         }
 
-        // --- 核心功能：搜尋買家病歷 ---
         function searchCustomer() {
             const query = document.getElementById('globalSearch').value.trim();
             const area = document.getElementById('searchResultArea');
             const content = document.getElementById('customerHistoryContent');
-            const groupArea = document.getElementById('groupContentArea');
-
-            if(!query) {
-                closeSearch();
-                return;
-            }
-
+            if(!query) { area.classList.add('hidden'); document.getElementById('groupContentArea').classList.remove('hidden'); return; }
+            
             area.classList.remove('hidden');
-            groupArea.classList.add('hidden');
+            document.getElementById('groupContentArea').classList.add('hidden');
             content.innerHTML = '';
-
-            let foundCount = 0;
+            
             Object.keys(groups).forEach(gn => {
-                const matches = groups[gn].orders.filter(o => o.name.includes(query));
-                matches.forEach(m => {
-                    foundCount++;
+                groups[gn].orders.filter(o => o.name.includes(query)).forEach(m => {
                     content.innerHTML += `
-                        <div class="glass-card p-4 border-l-4 border-rose-500">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <span class="text-[10px] bg-rose-100 text-rose-600 px-2 py-1 rounded-md font-bold">${gn}</span>
-                                    <h4 class="font-bold mt-2">${m.name}</h4>
-                                </div>
-                                <span class="text-xs font-bold text-rose-500">$${m.price}</span>
+                        <div class="glass-card p-5 border-l-4 border-rose-500">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-1 rounded font-bold">${gn}</span>
+                                <span class="text-xs font-bold ${m.payStatus==='已對帳'?'text-blue-500':'text-red-400'}">${m.payStatus}</span>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2">${m.items}</p>
-                            <div class="mt-3 pt-3 border-t text-[10px] flex justify-between">
-                                <span>狀態：${m.status}</span>
-                                <span class="text-blue-500 font-bold">門市：${m.store || '未填'}</span>
-                            </div>
+                            <h4 class="font-bold text-gray-800">${m.name} <span class="text-xs font-normal text-gray-400">($${m.price})</span></h4>
+                            <p class="text-xs text-rose-400 my-2">${m.items}</p>
+                            <p class="text-[10px] text-gray-400 bg-gray-50 p-2 rounded">備註：${m.memo || '無'}</p>
                         </div>
                     `;
                 });
             });
-
-            if(foundCount === 0) content.innerHTML = '<p class="text-gray-400 p-4">查無此買家的資料...</p>';
         }
 
-        function closeSearch() {
-            document.getElementById('globalSearch').value = '';
-            document.getElementById('searchResultArea').classList.add('hidden');
-            document.getElementById('groupContentArea').classList.remove('hidden');
-        }
-
-        // --- 其他工具函數 ---
-        function saveAll() { localStorage.setItem('daigo_v4_data', JSON.stringify(groups)); }
-        function openModal(id = null) {
-            editId = id;
-            if(id) {
-                const o = groups[activeGroup].orders.find(x => x.id === id);
-                document.getElementById('inName').value = o.name;
-                document.getElementById('inPrice').value = o.price;
-                document.getElementById('inItems').value = o.items;
-                document.getElementById('inWeight').value = o.weight;
-                document.getElementById('inStore').value = o.store;
-            }
-            document.getElementById('orderModal').classList.add('active');
-        }
-        function closeModal() {
-            document.getElementById('orderModal').classList.remove('active');
-            document.querySelectorAll('#orderModal input, #orderModal textarea').forEach(i => i.value = '');
-        }
-        function updateRowWeight(id, val) {
-            groups[activeGroup].orders.find(x => x.id === id).weight = parseFloat(val) || 0;
-            saveAll();
-            renderOrders();
-        }
-        function updateRowStatus(id, val) {
-            groups[activeGroup].orders.find(x => x.id === id).status = val;
-            saveAll();
-        }
-        function deleteOrder(id) {
-            if(confirm("確定刪除此訂單？")) {
-                groups[activeGroup].orders = groups[activeGroup].orders.filter(x => x.id !== id);
-                saveAll();
-                renderOrders();
-            }
-        }
-        function exportAllData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(groups));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "daigo_full_backup.json");
-            dlAnchorElem.click();
-        }
+        function updateSubStatus(id, field, val) { groups[activeGroup].orders.find(x => x.id === id)[field] = val; saveAll(); renderOrders(); }
+        function updateGroupConfig() { groups[activeGroup].weight = parseFloat(document.getElementById('groupWeight').value) || 0; groups[activeGroup].ship = parseFloat(document.getElementById('groupShip').value) || 0; saveAll(); renderOrders(); }
+        function saveAll() { localStorage.setItem('daigo_v5_db', JSON.stringify(groups)); }
+        function saveAndRefresh(name) { saveAll(); loadGroup(name); }
+        function openModal(id = null) { editId = id; if(id) { const o = groups[activeGroup].orders.find(x => x.id === id); document.getElementById('inName').value = o.name; document.getElementById('inPrice').value = o.price; document.getElementById('inItems').value = o.items; document.getElementById('inPayMethod').value = o.payMethod; document.getElementById('inLastFive').value = o.lastFive; document.getElementById('inPayTime').value = o.payTime; document.getElementById('inMemo').value = o.memo; } document.getElementById('orderModal').classList.add('active'); }
+        function closeModal() { document.getElementById('orderModal').classList.remove('active'); document.querySelectorAll('#orderModal input, #orderModal textarea').forEach(i => i.value = ''); editId = null; }
+        function closeSearch() { document.getElementById('globalSearch').value = ''; searchCustomer(); }
+        function deleteGroup(e, name) { e.stopPropagation(); if(confirm(`確定刪除「${name}」？`)) { delete groups[name]; if(activeGroup===name) activeGroup=""; saveAll(); location.reload(); }}
+        function deleteOrder(id) { if(confirm("刪除此訂單？")) { groups[activeGroup].orders = groups[activeGroup].orders.filter(x=>x.id!==id); saveAll(); renderOrders(); }}
+        function exportAllData() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(groups)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", "full_backup.json"); dlAnchorElem.click(); }
     </script>
 </body>
 </html>
