@@ -3,45 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>代購智慧管家 20.0 | 旗艦完工版</title>
+    <title>代購智慧管家 21.0 | RWD 全方位適配版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #fcfafb; margin: 0; display: flex; }
-        .sidebar { width: 260px; background: white; border-right: 1px solid #f1f5f9; min-height: 100vh; position: sticky; top: 0; padding: 20px; z-index: 10; }
-        .nav-item { padding: 12px 20px; border-radius: 12px; cursor: pointer; color: #64748b; font-size: 14px; margin-bottom: 5px; transition: 0.2s; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #fcfafb; margin: 0; overflow-x: hidden; }
+        
+        /* 側邊欄 RWD 邏輯 */
+        .sidebar { 
+            width: 260px; background: white; border-right: 1px solid #f1f5f9; 
+            min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 50; 
+            transition: transform 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0 !important; }
+        }
+        .main-content { margin-left: 260px; transition: margin-left 0.3s ease; width: 100%; }
+
+        /* 介面美化 */
+        .nav-item { padding: 12px 20px; border-radius: 12px; cursor: pointer; color: #64748b; margin-bottom: 5px; font-size: 14px; }
         .nav-item:hover, .nav-item.active { background: #fff1f2; color: #e11d48; font-weight: bold; }
         .glass-card { background: white; border-radius: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f8fafc; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 15px; }
         .modal.active { display: flex; }
-        .status-select { border-radius: 6px; font-size: 11px; padding: 4px 10px; font-weight: bold; border: none; cursor: pointer; }
+        
+        /* 狀態顏色 */
+        .status-select { border-radius: 6px; font-size: 11px; padding: 4px 10px; font-weight: bold; border: none; cursor: pointer; width: 100%; }
         .st-chk { background-color: #3b82f6 !important; color: white !important; }
         .st-ord { background-color: #f97316 !important; color: white !important; }
         .st-none { background-color: #f3f4f6; color: #9ca3af; }
     </style>
 </head>
-<body>
+<body class="flex">
 
-    <aside class="sidebar flex flex-col">
-        <div class="text-rose-500 font-bold text-xl px-2 mb-8"><i class="fas fa-heart mr-2"></i>代購智慧管家</div>
-        <nav class="flex-1 space-y-1">
+    <header class="md:hidden fixed top-0 left-0 right-0 bg-white border-b p-4 flex items-center justify-between z-40">
+        <button onclick="toggleSidebar()" class="text-rose-500 text-2xl"><i class="fas fa-bars"></i></button>
+        <span class="font-bold text-rose-500">代購智慧管家</span>
+        <div class="w-8"></div> </header>
+
+    <aside id="sidebar" class="sidebar p-5 flex flex-col">
+        <div class="text-rose-500 font-bold text-xl px-2 mb-8 hidden md:flex items-center">
+            <i class="fas fa-heart mr-2"></i>代購智慧管家
+        </div>
+        <nav class="flex-1 space-y-1 overflow-y-auto">
             <div onclick="changeView('dashboard')" id="nav-dashboard" class="nav-item active"><i class="fas fa-th-large mr-3"></i> 總體看板</div>
+            
             <div class="mt-6 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">📋 團務管理</div>
             <div id="side-group-list" class="mt-2 space-y-1"></div>
             <div onclick="openModal('groupModal')" class="px-5 py-2 text-rose-400 text-[11px] font-bold cursor-pointer hover:underline">+ 新增團務頁面</div>
+
             <div class="mt-6 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">📦 物流出貨</div>
             <div onclick="changeView('shipping')" id="nav-shipping" class="nav-item"><i class="fas fa-truck mr-3"></i> 待出貨工作台</div>
             <div onclick="changeView('history')" id="nav-history" class="nav-item"><i class="fas fa-history mr-3"></i> 歷史紀錄區</div>
         </nav>
-        <button onclick="openModal('searchModal')" class="w-full bg-rose-500 text-white p-4 rounded-2xl text-xs font-bold shadow-lg shadow-rose-100"><i class="fas fa-id-card-alt mr-2"></i>買家病歷</button>
+        <button onclick="openModal('searchModal')" class="w-full bg-rose-500 text-white p-4 rounded-2xl text-xs font-bold shadow-lg mt-4"><i class="fas fa-id-card-alt mr-2"></i>買家病歷</button>
     </aside>
 
-    <main class="flex-1 p-6 md:p-10 min-w-0">
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/30 z-40 md:hidden"></div>
+
+    <main class="main-content p-6 md:p-10 pt-20 md:pt-10">
+        
         <div id="view-dashboard" class="max-w-6xl mx-auto space-y-6">
             <h2 class="text-2xl font-bold text-gray-800">活躍團務進度</h2>
-            <div class="glass-card overflow-hidden">
-                <table class="w-full text-left text-sm">
+            <div class="glass-card overflow-x-auto">
+                <table class="w-full text-left text-sm min-w-[600px]">
                     <thead class="bg-gray-50 text-gray-400 font-bold text-[10px] uppercase">
                         <tr><th class="p-4">團務名稱</th><th class="p-4">進度</th><th class="p-4 text-center">更新日期</th><th class="p-4">備註</th><th class="p-4 text-center">管理</th></tr>
                     </thead>
@@ -51,108 +79,105 @@
         </div>
 
         <div id="view-groupDetail" class="hidden max-w-6xl mx-auto space-y-6">
-            <div class="flex justify-between items-end border-b pb-4">
-                <h2 id="detail-title" class="text-3xl font-bold text-gray-800">---</h2>
-                <div class="flex bg-gray-100 p-1 rounded-xl">
-                    <button onclick="switchSubTab('order')" id="tab-order" class="px-4 py-2 rounded-lg text-xs font-bold bg-white text-rose-500 shadow-sm">對帳表</button>
-                    <button onclick="switchSubTab('calc')" id="tab-calc" class="px-4 py-2 rounded-lg text-xs font-bold text-gray-400">二補計算</button>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b pb-4 gap-4">
+                <h2 id="detail-title" class="text-2xl md:text-3xl font-bold text-gray-800">---</h2>
+                <div class="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto">
+                    <button onclick="switchSubTab('order')" id="tab-order" class="flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold bg-white text-rose-500 shadow-sm">對帳表</button>
+                    <button onclick="switchSubTab('calc')" id="tab-calc" class="flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold text-gray-400">二補計算</button>
                 </div>
             </div>
+            
             <div id="sub-order">
-                <div class="flex justify-end mb-4 space-x-2"><button onclick="showStats()" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold">商品統計</button><button onclick="openOrderModal()" class="bg-rose-500 text-white px-6 py-2 rounded-xl text-xs font-bold shadow-lg shadow-rose-200">錄入喊單</button></div>
-                <div class="glass-card overflow-hidden"><table class="w-full text-left text-[11px]"><thead class="bg-gray-50 text-gray-400 font-bold uppercase"><tr><th class="p-4">買家</th><th class="p-4">內容</th><th class="p-4">對帳/狀態</th><th class="p-4">金額/末5/日期</th><th class="p-4">備註</th><th class="p-4">操作</th></tr></thead><tbody id="order-tbody" class="divide-y divide-gray-100 text-gray-600"></tbody></table></div>
+                <div class="flex justify-end mb-4 space-x-2"><button onclick="showStats()" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold">統計</button><button onclick="openOrderModal()" class="bg-rose-500 text-white px-6 py-2 rounded-xl text-xs font-bold shadow-lg">錄入喊單</button></div>
+                <div class="glass-card overflow-x-auto"><table class="w-full text-left text-[11px] min-w-[700px]"><thead class="bg-gray-50 text-gray-400 font-bold uppercase"><tr><th class="p-4">買家</th><th class="p-4">內容</th><th class="p-4">對帳/狀態</th><th class="p-4">金額/末5/日期</th><th class="p-4">操作</th></tr></thead><tbody id="order-tbody" class="divide-y divide-gray-100"></tbody></table></div>
             </div>
+
             <div id="sub-calc" class="hidden space-y-6">
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="glass-card p-4"><p class="text-[10px] text-gray-400">總運費</p><input type="number" id="c-ship" class="w-full font-bold outline-none" onchange="updateGroupShipData()"></div>
                     <div class="glass-card p-4"><p class="text-[10px] text-gray-400">總重量(kg)</p><input type="number" id="c-weight" step="0.01" class="w-full font-bold outline-none" onchange="updateGroupShipData()"></div>
                     <div class="glass-card p-4 text-center"><p class="text-[10px] text-gray-400">運費單價</p><p id="c-rate" class="font-bold text-green-600 text-lg">$0/kg</p></div>
                 </div>
-                <div class="glass-card overflow-hidden"><table class="w-full text-left text-xs"><thead class="bg-gray-50 text-gray-400 font-bold uppercase"><tr><th class="p-4">商品名稱</th><th class="p-4">單件重量(kg)</th><th class="p-4">單件應補金額</th><th class="p-4">總量</th></tr></thead><tbody id="calc-tbody" class="divide-y divide-gray-50"></tbody></table></div>
+                <div class="glass-card overflow-x-auto"><table class="w-full text-left text-xs min-w-[500px]"><thead class="bg-gray-50 text-gray-400 font-bold uppercase"><tr><th class="p-4">商品名稱</th><th class="p-4">單件重量(kg)</th><th class="p-4">單件應補金額</th><th class="p-4">目前總量</th></tr></thead><tbody id="calc-tbody" class="divide-y divide-gray-50"></tbody></table></div>
             </div>
         </div>
 
         <div id="view-shipping" class="hidden max-w-6xl mx-auto space-y-6">
-            <div class="flex justify-between items-center"><h2 class="text-2xl font-bold text-gray-800">待出貨管理清單</h2><button onclick="openShipManualModal()" class="bg-rose-500 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-lg">建立待出貨單</button></div>
-            <div class="glass-card overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-gray-400 font-bold text-[10px] uppercase">
-                        <tr><th class="p-4">買家臉書</th><th class="p-4">收件姓名</th><th class="p-4">門市/單號</th><th class="p-4 text-center">操作</th></tr>
-                    </thead>
-                    <tbody id="shipping-list-tbody" class="divide-y divide-gray-100"></tbody>
-                </table>
-            </div>
+            <div class="flex justify-between items-center"><h2 class="text-2xl font-bold text-gray-800">📦 待出貨工作台</h2><button onclick="openShipManualModal()" class="bg-rose-500 text-white px-6 py-2 rounded-xl text-xs font-bold">建立出貨單</button></div>
+            <div class="glass-card overflow-x-auto"><table class="w-full text-left text-sm min-w-[600px]"><thead class="bg-gray-50 text-gray-400 font-bold text-[10px] uppercase"><tr><th class="p-4">臉書名稱</th><th class="p-4">收件姓名</th><th class="p-4">門市/單號</th><th class="p-4 text-center">管理</th></tr></thead><tbody id="shipping-list-tbody" class="divide-y divide-gray-100"></tbody></table></div>
         </div>
 
         <div id="view-history" class="hidden max-w-6xl mx-auto space-y-8">
-            <h2 class="text-2xl font-bold text-gray-800">歷史紀錄存檔</h2>
+            <h2 class="text-2xl font-bold text-gray-800">歷史紀錄區</h2>
             <div class="space-y-4">
-                <p class="text-xs font-bold text-gray-400 uppercase">已出貨買家紀錄</p>
-                <div class="glass-card overflow-hidden"><table class="w-full text-left text-xs"><thead class="bg-gray-50 text-gray-400"><tr><th class="p-4">買家</th><th class="p-4">出貨內容</th><th class="p-4">日期</th><th class="p-4 text-center">管理</th></tr></thead><tbody id="history-ship-tbody" class="divide-y divide-gray-100 text-gray-600"></tbody></table></div>
+                <p class="text-xs font-bold text-gray-400">已核銷出貨紀錄</p>
+                <div class="glass-card overflow-x-auto"><table class="w-full text-left text-xs min-w-[600px]"><thead class="bg-gray-50 text-gray-400"><tr><th class="p-4">買家</th><th class="p-4">內容</th><th class="p-4">單據資料</th><th class="p-4 text-center">操作</th></tr></thead><tbody id="history-ship-tbody" class="divide-y divide-gray-100"></tbody></table></div>
             </div>
             <div class="space-y-4">
-                <p class="text-xs font-bold text-gray-400 uppercase">已結案團務存檔</p>
-                <div class="glass-card overflow-hidden"><table class="w-full text-left text-xs"><thead class="bg-gray-50 text-gray-400"><tr><th class="p-4">團務名稱</th><th class="p-4">結案日期</th><th class="p-4 text-center">管理</th></tr></thead><tbody id="history-group-tbody" class="divide-y divide-gray-100 text-gray-600"></tbody></table></div>
+                <p class="text-xs font-bold text-gray-400">已結案團務存檔</p>
+                <div class="glass-card overflow-x-auto"><table class="w-full text-left text-xs min-w-[500px]"><thead class="bg-gray-50 text-gray-400"><tr><th class="p-4">團務名稱</th><th class="p-4">結案日期</th><th class="p-4 text-center">管理</th></tr></thead><tbody id="history-group-tbody" class="divide-y divide-gray-100"></tbody></table></div>
             </div>
         </div>
     </main>
 
-    <div id="shipManualModal" class="modal"><div class="bg-white p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl space-y-4">
-        <h3 class="font-bold text-xl" id="sm-title">建立出貨單</h3>
-        <input id="sm-fb" placeholder="臉書名稱" class="w-full border p-4 rounded-2xl outline-none">
-        <input id="sm-name" placeholder="收件人真實姓名" class="w-full border p-4 rounded-2xl">
-        <input id="sm-store" placeholder="取件門市" class="w-full border p-4 rounded-2xl">
-        <input id="sm-code" placeholder="賣貨便單號" class="w-full border p-4 rounded-2xl">
-        <div class="flex gap-4 pt-4"><button onclick="closeModal('shipManualModal')" class="flex-1 text-gray-400 font-bold">取消</button><button onclick="saveManualShip()" class="flex-1 bg-rose-500 text-white py-4 rounded-2xl font-bold shadow-lg">確認儲存</button></div>
+    <div id="orderModal" class="modal"><div class="bg-white rounded-[2rem] w-full max-w-xl p-6 md:p-10 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-gray-800">錄入/編輯訂單資料</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><input id="inName" placeholder="臉書名稱" class="border p-4 rounded-xl text-sm"><input id="inSocial" placeholder="社群名稱" class="border p-4 rounded-xl text-sm"></div>
+        <div id="p-selector" class="bg-rose-50 p-6 rounded-[2rem] space-y-3"></div>
+        <div class="flex justify-between font-bold text-rose-600 px-2 text-lg"><span>總金額：</span><span id="auto-price">$0</span></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><input id="inLast" placeholder="末五碼/無卡" class="border p-4 rounded-xl text-sm"><input type="date" id="inPayDate" class="border p-4 rounded-xl text-sm"></div>
+        <textarea id="inMemo" placeholder="備註 (找零、缺貨等紀錄)" class="w-full border p-4 rounded-xl text-sm h-20"></textarea>
+        <div class="flex gap-4"><button onclick="closeModal('orderModal')" class="flex-1 text-gray-400 font-bold">取消</button><button onclick="saveO()" class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-lg">確認儲存</button></div>
     </div></div>
 
-    <div id="verifyModal" class="modal"><div class="bg-white rounded-[2.5rem] w-full max-w-xl p-10 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
-        <h3 class="text-xl font-bold mb-2 text-gray-800">📦 出貨防呆核對</h3>
-        <p class="text-xs text-gray-400 mb-6" id="verify-info"></p>
-        <div class="bg-rose-50 p-8 rounded-[2rem] space-y-3 mb-6" id="verify-items-area"></div>
-        <div class="flex gap-4"><button onclick="closeModal('verifyModal')" class="flex-1 text-gray-400 font-bold">取消</button><button id="btn-finish-verify" class="flex-2 py-4 bg-gray-800 text-white rounded-2xl font-bold shadow-xl">確認所有品項正確，確認出貨</button></div>
-    </div></div>
-
-    <div id="groupModal" class="modal"><div class="bg-white rounded-[2rem] w-full max-w-md p-10 shadow-2xl mx-4">
-        <h3 class="font-bold text-xl mb-4" id="group-modal-title">開啟新團務</h3>
-        <input id="newGName" placeholder="團務名稱" class="w-full border p-4 rounded-2xl mb-4 outline-none">
-        <div id="p-inputs" class="space-y-2 mb-4 max-h-40 overflow-y-auto pr-2"></div>
-        <button onclick="addPField()" class="text-[10px] text-rose-500 font-bold uppercase tracking-widest">+ 品項定義</button>
+    <div id="groupModal" class="modal"><div class="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl space-y-4">
+        <h3 class="font-bold text-xl" id="group-modal-title">開啟新團務</h3>
+        <input id="newGName" placeholder="團務名稱" class="w-full border p-4 rounded-2xl outline-none">
+        <div id="p-inputs" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
+        <button onclick="addPField()" class="text-[10px] text-rose-500 font-bold uppercase">+ 品項定義</button>
         <div class="flex gap-4 mt-8"><button onclick="closeModal('groupModal')" class="flex-1 text-gray-400 font-bold">取消</button><button onclick="createG()" class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-bold">確認建立</button></div>
     </div></div>
 
-    <div id="orderModal" class="modal"><div class="bg-white rounded-[2.5rem] w-full max-w-xl p-8 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
-        <h3 class="text-xl font-bold mb-6">錄入/編輯訂單</h3>
-        <div class="grid grid-cols-2 gap-4 mb-4"><input id="inName" placeholder="臉書名稱" class="border p-4 rounded-xl text-sm"><input id="inSocial" placeholder="社群名稱" class="border p-4 rounded-xl text-sm"></div>
-        <div id="p-selector" class="bg-rose-50 p-6 rounded-[2rem] space-y-3 mb-4"></div>
-        <div class="flex justify-between font-bold text-rose-600 mb-4 px-4 text-lg"><span>總金額：</span><span id="auto-price">$0</span></div>
-        <div class="grid grid-cols-2 gap-4 mb-4"><input id="inLast" placeholder="末五碼" class="border p-4 rounded-xl text-sm"><input type="date" id="inPayDate" class="border p-4 rounded-xl text-sm"></div>
-        <textarea id="inMemo" placeholder="備註紀錄" class="w-full border p-4 rounded-xl text-sm h-20 mb-4"></textarea>
-        <div class="flex gap-4"><button onclick="closeModal('orderModal')" class="flex-1 text-gray-400 font-bold">取消</button><button onclick="saveO()" class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-lg">確認存檔</button></div>
+    <div id="verifyModal" class="modal"><div class="bg-white rounded-[2.5rem] w-full max-w-xl p-8 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-2 text-gray-800">📦 出貨防呆核對</h3>
+        <p class="text-[10px] text-gray-400 mb-6" id="verify-info"></p>
+        <div class="bg-rose-50 p-6 rounded-[2rem] space-y-3 mb-6" id="verify-items-area"></div>
+        <div class="flex gap-4"><button onclick="closeModal('verifyModal')" class="flex-1 text-gray-400 font-bold">取消</button><button id="btn-finish-verify" class="flex-2 py-4 bg-gray-800 text-white rounded-2xl font-bold shadow-lg">確認無誤，確認出貨</button></div>
     </div></div>
 
-    <div id="statsModal" class="modal"><div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl"><h3 class="text-xl font-bold mb-6 text-indigo-600">下單統計</h3><div id="stats-content" class="space-y-3"></div><button onclick="closeModal('statsModal')" class="w-full mt-8 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500">關閉</button></div></div>
+    <div id="shipManualModal" class="modal"><div class="bg-white p-8 rounded-3xl w-full max-w-md space-y-4">
+        <h3 class="font-bold text-xl" id="sm-title">建立出貨單</h3>
+        <input id="sm-fb" placeholder="臉書名稱" class="w-full border p-4 rounded-xl"><input id="sm-name" placeholder="收件人姓名" class="w-full border p-4 rounded-xl"><input id="sm-store" placeholder="收件門市" class="w-full border p-4 rounded-xl"><input id="sm-code" placeholder="賣貨便單號" class="w-full border p-4 rounded-xl">
+        <div class="flex gap-2 pt-4"><button onclick="closeModal('shipManualModal')" class="flex-1 text-gray-400">取消</button><button onclick="saveManualShip()" class="flex-1 bg-rose-500 text-white p-4 rounded-xl font-bold">儲存</button></div>
+    </div></div>
 
-    <div id="searchModal" class="modal"><div class="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl mx-4">
-        <h3 class="font-bold text-xl mb-6 text-rose-500">買家病歷調閱</h3>
-        <input type="text" id="g-search-q" oninput="doGlobalSearch()" placeholder="輸入名稱搜尋..." class="w-full p-4 border rounded-2xl outline-none">
-        <div id="g-search-res" class="max-h-80 overflow-y-auto space-y-4 mt-4 pr-2"></div>
-        <button onclick="closeModal('searchModal')" class="w-full py-4 mt-6 bg-gray-100 rounded-2xl font-bold">關閉</button>
+    <div id="searchModal" class="modal"><div class="bg-white rounded-[2rem] w-full max-w-lg p-8 shadow-2xl mx-4 space-y-6">
+        <h3 class="font-bold text-xl text-rose-500">買家病歷搜尋</h3>
+        <input type="text" id="g-search-q" oninput="doGlobalSearch()" placeholder="輸入關鍵字..." class="w-full p-4 border rounded-2xl">
+        <div id="g-search-res" class="max-h-80 overflow-y-auto space-y-4 mt-2"></div>
+        <button onclick="closeModal('searchModal')" class="w-full py-4 bg-gray-100 rounded-2xl font-bold text-gray-400">關閉</button>
     </div></div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('daigo_v20_db')) || { groups: {}, historyGroups: {}, manualShips: [], historyShips: [] };
+        let db = JSON.parse(localStorage.getItem('daigo_v21_db')) || { groups: {}, historyGroups: {}, manualShips: [], historyShips: [] };
         let editingOrderId = null; let editingGroupId = null; let editingShipId = null;
-        const checkStats = ["尚未更新", "已對帳", "需退款"];
-        const orderStats = ["尚未更新", "已下單", "缺貨", "二販購入"];
 
-        function save() { localStorage.setItem('daigo_v20_db', JSON.stringify(db)); }
+        function save() { localStorage.setItem('daigo_v21_db', JSON.stringify(db)); }
 
-        // 頁面切換與渲染
+        // RWD 功能：側邊欄切換
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sb.classList.toggle('active');
+            overlay.classList.toggle('hidden');
+        }
+
         function changeView(view, gid = null) {
             document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
             document.getElementById('view-' + view).classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            if(window.innerWidth <= 768) toggleSidebar(); // 手機版點擊後自動收起選單
+            
             if(view==='dashboard'){ document.getElementById('nav-dashboard').classList.add('active'); renderDashboard(); }
             else if(view==='shipping'){ document.getElementById('nav-shipping').classList.add('active'); renderShippingWorkspace(); }
             else if(view==='history'){ document.getElementById('nav-history').classList.add('active'); renderHistory(); }
@@ -161,7 +186,9 @@
 
         function renderSide() {
             const div = document.getElementById('side-group-list'); div.innerHTML = '';
-            Object.values(db.groups).forEach(g => { div.innerHTML += `<div id="side-item-${g.id}" onclick="changeView('groupDetail', '${g.id}')" class="nav-item truncate">• ${g.name}</div>`; });
+            Object.values(db.groups).forEach(g => { 
+                div.innerHTML += `<div id="side-item-${g.id}" onclick="changeView('groupDetail', '${g.id}')" class="nav-item truncate">• ${g.name}</div>`; 
+            });
         }
 
         function renderDashboard() {
@@ -169,44 +196,32 @@
             Object.values(db.groups).forEach(g => {
                 const isDone = g.progress === '已結案';
                 tbody.innerHTML += `<tr>
-                    <td class="p-4 font-bold cursor-pointer underline" onclick="changeView('groupDetail','${g.id}')">${g.name}</td>
+                    <td class="p-4 font-bold text-gray-700 underline cursor-pointer" onclick="changeView('groupDetail','${g.id}')">${g.name}</td>
                     <td><select onchange="upGP('${g.id}',this.value)" class="status-select bg-rose-50 text-rose-600">
                         ${["開團中", "已下單", "官方出貨", "等待運回", "已抵台", "已結案"].map(s => `<option value="${s}" ${g.progress===s?'selected':''}>${s}</option>`).join('')}
                     </select></td>
                     <td class="text-center text-[10px] text-gray-400">${g.update}</td>
-                    <td><input value="${g.memo || ''}" onchange="upGM('${g.id}',this.value)" class="bg-transparent text-xs w-full italic" placeholder="點擊備註"></td>
-                    <td class="text-center space-x-2">
+                    <td><input value="${g.memo || ''}" onchange="upGM('${g.id}',this.value)" class="bg-transparent text-[10px] w-full" placeholder="備註"></td>
+                    <td class="p-4 text-center space-x-2 flex justify-center">
                         <button onclick="editG('${g.id}')" class="text-blue-400"><i class="fas fa-edit"></i></button>
                         ${isDone ? `<button onclick="archiveG('${g.id}')" class="bg-gray-800 text-white text-[9px] px-2 py-1 rounded">歸檔</button>` : ''}
-                        <button onclick="deleteG('${g.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        <button onclick="deleteG('${g.id}')" class="text-gray-300"><i class="fas fa-trash"></i></button>
                     </td></tr>`;
             });
         }
 
-        // 待出貨工作台 (支援編輯刪除)
         function renderShippingWorkspace() {
             const tbody = document.getElementById('shipping-list-tbody'); tbody.innerHTML = '';
             db.manualShips.forEach((m, idx) => {
-                tbody.innerHTML += `<tr><td class="p-4 font-bold text-gray-700">${m.fbName}</td><td class="p-4">${m.realName}</td><td class="p-4"><span class="text-[10px] bg-gray-100 p-1 rounded mr-2">${m.store}</span><span class="text-xs font-mono">${m.orderCode}</span></td><td class="p-4 text-center space-x-2">
+                tbody.innerHTML += `<tr><td class="p-4 font-bold text-gray-700">${m.fbName}</td><td class="p-4 text-xs">${m.realName}</td><td class="p-4 text-[10px] text-gray-400">${m.store}<br><span class="font-mono text-gray-700">${m.orderCode}</span></td><td class="p-4 text-center space-x-2 flex justify-center">
                     <button onclick="editShipManual(${idx})" class="text-blue-400"><i class="fas fa-edit"></i></button>
-                    <button onclick="deleteShipManual(${idx})" class="text-gray-200 hover:text-red-500 mr-4"><i class="fas fa-trash"></i></button>
-                    <button onclick="openVerifyModal(${idx})" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-rose-100">📦 開始核銷</button>
+                    <button onclick="deleteShipManual(${idx})" class="text-gray-200 mr-2"><i class="fas fa-trash"></i></button>
+                    <button onclick="openVerifyModal(${idx})" class="bg-rose-500 text-white px-3 py-1 rounded-lg text-[10px] font-bold shadow-md">📦 開始核銷</button>
                 </td></tr>`;
             });
         }
 
-        function openShipManualModal() { editingShipId = null; document.getElementById('sm-title').innerText = '建立出貨單'; document.querySelectorAll('#shipManualModal input').forEach(i=>i.value=''); openModal('shipManualModal'); }
-        function editShipManual(idx) { editingShipId = idx; const m = db.manualShips[idx]; document.getElementById('sm-title').innerText = '編輯出貨單'; document.getElementById('sm-fb').value = m.fbName; document.getElementById('sm-name').value = m.realName; document.getElementById('sm-store').value = m.store; document.getElementById('sm-code').value = m.orderCode; openModal('shipManualModal'); }
-        function deleteShipManual(idx) { if(confirm('刪除這筆出貨單？')) { db.manualShips.splice(idx, 1); save(); renderShippingWorkspace(); }}
-
-        function saveManualShip() {
-            const data = { fbName: document.getElementById('sm-fb').value, realName: document.getElementById('sm-name').value, store: document.getElementById('sm-store').value, orderCode: document.getElementById('sm-code').value };
-            if(!data.fbName) return alert('需填寫名稱');
-            if(editingShipId !== null) db.manualShips[editingShipId] = data; else db.manualShips.push(data);
-            save(); renderShippingWorkspace(); closeModal('shipManualModal');
-        }
-
-        // 二補計算與自動試算
+        // 核心計算功能
         function renderShipCalc() {
             const g = db.groups[db.activeGid]; document.getElementById('c-ship').value = g.shipC; document.getElementById('c-weight').value = g.weight;
             const rate = g.weight > 0 ? (g.shipC / g.weight) : 0; document.getElementById('c-rate').innerText = `$${Math.round(rate)}/kg`;
@@ -217,80 +232,72 @@
                 tbody.innerHTML += `<tr><td class="p-4 font-bold text-gray-700">${p.name}</td>
                     <td><input type="number" step="0.01" value="${p.weight}" onchange="upPW(${i},this.value)" class="border w-20 p-2 text-xs rounded-xl"></td>
                     <td class="p-4 font-bold text-rose-500">$${itemCost}</td>
-                    <td class="p-4 font-bold text-blue-500">${stats[p.name]||0} 件</td></tr>`;
+                    <td class="p-4 font-bold text-blue-500 text-[10px]">${stats[p.name]||0} 件</td></tr>`;
             });
         }
 
-        // 歷史紀錄管理
-        function renderHistory() {
-            const stbody = document.getElementById('history-ship-tbody'); stbody.innerHTML = '';
-            db.historyShips.slice().reverse().forEach((h, idx) => {
-                const trueIdx = db.historyShips.length - 1 - idx;
-                stbody.innerHTML += `<tr><td class="p-4 font-bold text-rose-500">${h.name}</td><td class="p-4 text-gray-500 text-[10px]">${h.info}</td><td class="p-4 text-[10px]">${h.detail}</td><td class="p-4 text-gray-400 text-[10px]">${h.date}</td>
-                    <td class="p-4 text-center space-x-2"><button onclick="restoreShip(${trueIdx})" class="text-blue-400 text-xs">還原</button><button onclick="delShipPerm(${trueIdx})" class="text-red-300 text-xs">永久刪除</button></td></tr>`;
-            });
-            const gtbody = document.getElementById('history-group-tbody'); gtbody.innerHTML = '';
-            Object.values(db.historyGroups).forEach(g => {
-                gtbody.innerHTML += `<tr><td class="p-4 font-bold">${g.name}</td><td class="p-4 text-gray-400 text-[10px]">${g.update}</td>
-                    <td class="p-4 text-center space-x-2"><button onclick="restoreG('${g.id}')" class="text-blue-400 text-xs">還原</button><button onclick="delGPerm('${g.id}')" class="text-red-300 text-xs">永久刪除</button></td></tr>`;
-            });
+        // 其它邏輯 (saveO, renderDetail, deleteG, etc.)
+        function saveO() {
+            const g = db.groups[db.activeGid]; const its = []; let tot = 0;
+            g.products.forEach((p, i) => { const q = parseInt(document.getElementById('qty-'+i).innerText); if(q>0){ its.push({name:p.name, qty:q}); tot += p.price*q; } });
+            const data = { id:editingOrderId||Date.now(), name:document.getElementById('inName').value, social:document.getElementById('inSocial').value, last:document.getElementById('inLast').value, payDate:document.getElementById('inPayDate').value, memo:document.getElementById('inMemo').value, items:its, itemsStr:its.map(i=>i.name+'x'+i.qty).join(','), price:tot, chk:editingOrderId?g.orders.find(x=>x.id==editingOrderId).chk:'尚未更新', ord:editingOrderId?g.orders.find(x=>x.id==editingOrderId).ord:'尚未更新' };
+            if(!data.name) return alert('請輸入臉書名稱');
+            if(editingOrderId){ const idx=g.orders.findIndex(x=>x.id==editingOrderId); g.orders[idx]=data; } else g.orders.push(data);
+            save(); renderDetail(); closeModal('orderModal');
         }
 
-        function restoreShip(idx) { db.manualShips.push({ fbName: db.historyShips[idx].name, realName: '還原單', store: '-', orderCode: '-' }); db.historyShips.splice(idx, 1); save(); renderHistory(); alert('已還原至出貨工作台'); }
-        function delShipPerm(idx) { if(confirm('永久刪除此出貨紀錄？不可復原。')) { db.historyShips.splice(idx, 1); save(); renderHistory(); }}
-        function restoreG(gid) { db.groups[gid] = db.historyGroups[gid]; delete db.historyGroups[gid]; save(); location.reload(); }
-        function delGPerm(gid) { if(confirm('永久刪除整團存檔？')) { delete db.historyGroups[gid]; save(); renderHistory(); }}
-
-        // 核心邏輯補全
-        function archiveG(gid) { if(confirm('歸檔後將移入歷史紀錄區，確定？')) { db.historyGroups[gid] = db.groups[gid]; delete db.groups[gid]; save(); location.reload(); }}
-        function openVerifyModal(idx) {
-            const m = db.manualShips[idx]; document.getElementById('verify-info').innerText = `核對買家：${m.fbName}`;
-            const area = document.getElementById('verify-items-area'); area.innerHTML = ''; let found = false;
-            Object.values(db.groups).forEach(g => { if(g.progress==='已抵台'){ const o = g.orders.find(x=>x.name===m.fbName); if(o){ found=true; o.items.forEach(it=>{ area.innerHTML += `<div class="flex items-center space-x-3 bg-white p-4 rounded-xl border border-rose-100 font-bold text-xs"><input type="checkbox" class="w-5 h-5 accent-rose-500"><span>[${g.name}] ${it.name} x ${it.qty}</span></div>`; }); }}});
-            if(!found) area.innerHTML = '<p class="text-gray-400 text-center">查無關聯已抵台貨物。</p>';
-            document.getElementById('btn-finish-verify').onclick = () => finishVerification(idx);
-            openModal('verifyModal');
-        }
-        function finishVerification(idx) {
-            const m = db.manualShips[idx]; if(!confirm('確認出貨？')) return;
-            let info = ""; Object.values(db.groups).forEach(g => { if(g.progress==='已抵台'){ const o = g.orders.find(x=>x.name===m.fbName); if(o){ info += `[${g.name}] ${o.itemsStr} `; g.orders = g.orders.filter(x=>x.name!==m.fbName); } } });
-            db.historyShips.push({ name: m.fbName, info: info || "手動單", detail: `${m.realName}/${m.store}/${m.orderCode}`, date: new Date().toLocaleDateString() });
-            db.manualShips.splice(idx, 1); save(); alert('核銷完成，已存入歷史！'); location.reload();
-        }
         function renderDetail() {
             const g = db.groups[db.activeGid]; if(!g) return; document.getElementById('detail-title').innerText = g.name;
             const tbody = document.getElementById('order-tbody'); tbody.innerHTML = '';
             g.orders.forEach(o => {
-                tbody.innerHTML += `<tr><td class="p-4 font-bold">${o.name}<br><span class="text-[9px] text-gray-400">${o.social || '-'}</span></td><td class="p-4 text-rose-400 font-medium text-[10px]">${o.itemsStr}</td><td class="p-4"><select onchange="upOS('${o.id}','chk',this.value)" class="status-select ${o.chk==='已對帳'?'st-chk':'st-none'} mb-1">${checkStats.map(s=>`<option value="${s}" ${o.chk===s?'selected':''}>${s}</option>`).join('')}</select><br><select onchange="upOS('${o.id}','ord',this.value)" class="status-select ${o.ord==='已下單'?'st-ord':'st-none'}">${orderStats.map(s=>`<option value="${s}" ${o.ord===s?'selected':''}>${s}</option>`).join('')}</select></td><td class="p-4 font-bold text-gray-800">$${o.price}<div class="text-[9px] text-gray-400 font-normal">末${o.last} | ${o.payDate}</div></td><td class="p-4 italic text-gray-400 text-[10px]">${o.memo || '-'}</td><td class="p-4 text-center space-x-2"><button onclick="editO('${o.id}')" class="text-blue-300"><i class="fas fa-edit"></i></button><button onclick="delO('${o.id}')" class="text-gray-200"><i class="fas fa-trash"></i></button></td></tr>`;
+                tbody.innerHTML += `<tr><td class="p-4 font-bold">${o.name}<br><span class="text-[9px] text-gray-400">${o.social || '-'}</span></td><td class="p-4 text-rose-400 text-[9px]">${o.itemsStr}</td><td class="p-4">
+                    <select onchange="upOS('${o.id}','chk',this.value)" class="status-select ${o.chk==='已對帳'?'st-chk':'st-none'} mb-1">${["尚未更新","已對帳","需退款"].map(s=>`<option value="${s}" ${o.chk===s?'selected':''}>${s}</option>`).join('')}</select>
+                    <select onchange="upOS('${o.id}','ord',this.value)" class="status-select ${o.ord==='已下單'?'st-ord':'st-none'}">${["尚未更新","已下單","缺貨","二販購入"].map(s=>`<option value="${s}" ${o.ord===s?'selected':''}>${s}</option>`).join('')}</select>
+                </td><td class="p-4 font-bold text-gray-800">$${o.price}<div class="text-[9px] text-gray-400">末${o.last} | ${o.payDate}</div></td><td class="p-4 text-center space-x-2 flex justify-center"><button onclick="editO('${o.id}')" class="text-blue-300"><i class="fas fa-edit"></i></button><button onclick="delO('${o.id}')" class="text-gray-200"><i class="fas fa-trash"></i></button></td></tr>`;
             });
             switchSubTab('order');
         }
-        function saveO() {
-            const g = db.groups[db.activeGid]; const its = []; let tot = 0; g.products.forEach((p,i)=>{ const q = parseInt(document.getElementById('qty-'+i).innerText); if(q>0){ its.push({name:p.name,qty:q}); tot += p.price*q; } });
-            const data = { id:editingOrderId||Date.now(), name:document.getElementById('inName').value, social:document.getElementById('inSocial').value, last:document.getElementById('inLast').value, payDate:document.getElementById('inPayDate').value, memo:document.getElementById('inMemo').value, items:its, itemsStr:its.map(i=>i.name+'x'+i.qty).join(','), price:tot, chk:editingOrderId?g.orders.find(x=>x.id==editingOrderId).chk:'尚未更新', ord:editingOrderId?g.orders.find(x=>x.id==editingOrderId).ord:'尚未更新' };
-            if(editingOrderId){ const idx=g.orders.findIndex(x=>x.id==editingOrderId); g.orders[idx]=data; } else g.orders.push(data);
-            save(); renderDetail(); closeModal('orderModal');
+
+        // 歷史與管理
+        function archiveG(gid) { if(confirm('確定歸檔？')) { db.historyGroups[gid] = db.groups[gid]; delete db.groups[gid]; save(); location.reload(); }}
+        function renderHistory() {
+            const st = document.getElementById('history-ship-tbody'); st.innerHTML = '';
+            db.historyShips.slice().reverse().forEach((h, i) => { const idx = db.historyShips.length-1-i; st.innerHTML += `<tr><td class="p-4 font-bold text-rose-500">${h.name}</td><td class="p-4 text-[9px] text-gray-400">${h.info}</td><td class="p-4 text-[10px] text-gray-500">${h.detail}</td><td class="p-4 text-center space-x-2 flex justify-center"><button onclick="resShip(${idx})" class="text-blue-400 text-[10px]">還原</button><button onclick="delShipP(${idx})" class="text-gray-300 text-[10px]">刪除</button></td></tr>`; });
+            const gt = document.getElementById('history-group-tbody'); gt.innerHTML = '';
+            Object.values(db.historyGroups).forEach(g => { gt.innerHTML += `<tr><td class="p-4 font-bold">${g.name}</td><td class="p-4 text-gray-400 text-xs">${g.update}</td><td class="p-4 text-center flex justify-center space-x-2"><button onclick="resG('${g.id}')" class="text-blue-400 text-[10px]">還原</button><button onclick="delGP('${g.id}')" class="text-gray-300 text-[10px]">刪除</button></td></tr>`; });
         }
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
+
+        // 輔助工具函數
+        function openModal(id) { document.getElementById(id).classList.add('active'); if(id==='orderModal'&&!editingOrderId) renderPSelector(); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        function editO(oid) { editingOrderId = oid; const o = db.groups[db.activeGid].orders.find(x=>x.id==oid); document.getElementById('inName').value = o.name; document.getElementById('inSocial').value = o.social; document.getElementById('inLast').value = o.last; document.getElementById('inPayDate').value = o.payDate; document.getElementById('inMemo').value = o.memo; renderPSelector(o.items); openModal('orderModal'); }
-        function openOrderModal() { editingOrderId = null; document.querySelectorAll('#orderModal input, #orderModal textarea').forEach(i=>i.value=''); renderPSelector(); openModal('orderModal'); }
-        function renderPSelector(curItems=[]) { const g=db.groups[db.activeGid]; const area=document.getElementById('p-selector'); area.innerHTML=''; g.products.forEach((p,i)=>{ let q=0; const f=curItems.find(x=>x.name===p.name); if(f) q=f.qty; area.innerHTML+=`<div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm"><span class="text-xs font-bold text-gray-700">${p.name}</span><div class="flex items-center space-x-3"><button onclick="adj(${i},-1)" class="w-6 h-6 bg-white rounded-full shadow">-</button><span id="qty-${i}" class="font-bold text-sm">${q}</span><button onclick="adj(${i},1)" class="w-6 h-6 bg-rose-500 text-white rounded-full shadow">+</button></div></div>`; }); updatePrice(); }
+        function addPField() { const d=document.createElement('div'); d.className='flex gap-2'; d.innerHTML='<input placeholder="品項" class="flex-1 border-b p-name text-xs"><input type="number" placeholder="單價" class="w-20 border-b p-price text-xs">'; document.getElementById('p-inputs').appendChild(d); }
         function adj(i,d) { const el=document.getElementById('qty-'+i); el.innerText=Math.max(0,parseInt(el.innerText)+d); updatePrice(); }
         function updatePrice() { let sum=0; db.groups[db.activeGid].products.forEach((p,i)=>{ sum+=p.price*parseInt(document.getElementById('qty-'+i).innerText); }); document.getElementById('auto-price').innerText='$'+sum; }
-        function addPField() { const d=document.createElement('div'); d.className='flex gap-2'; d.innerHTML='<input placeholder="品項" class="flex-1 border-b p-name text-xs"><input type="number" placeholder="單價" class="w-20 border-b p-price text-xs">'; document.getElementById('p-inputs').appendChild(d); }
-        function createG() { const name=document.getElementById('newGName').value; if(!name) return; const ps=[]; document.querySelectorAll('#p-inputs .flex').forEach(r=>{ const pn=r.querySelector('.p-name').value; const pp=parseInt(r.querySelector('.p-price').value)||0; if(pn) ps.push({name:pn,price:pp,weight:0}); }); if(editingGroupId){ db.groups[editingGroupId].name=name; db.groups[editingGroupId].products=ps; } else { const gid='g'+Date.now(); db.groups[gid]={id:gid,name,products:ps,orders:[],progress:'開團中',update:new Date().toLocaleDateString(),shipC:0,weight:0}; } editingGroupId=null; save(); location.reload(); }
-        function editG(gid) { editingGroupId=gid; const g=db.groups[gid]; document.getElementById('newGName').value=g.name; document.getElementById('group-modal-title').innerText='編輯團務資料'; const inputs=document.getElementById('p-inputs'); inputs.innerHTML=''; g.products.forEach(p=>{ inputs.innerHTML+=`<div class="flex gap-2"><input placeholder="品項" class="flex-1 border-b p-name text-xs" value="${p.name}"><input type="number" placeholder="單價" class="w-20 border-b p-price text-xs" value="${p.price}"></div>`; }); openModal('groupModal'); }
-        function upGP(gid,v) { db.groups[gid].progress=v; db.groups[gid].update=new Date().toLocaleDateString(); save(); renderDashboard(); }
-        function upGM(gid,v) { db.groups[gid].memo=v; save(); }
-        function upOS(oid,f,v) { db.groups[db.activeGid].orders.find(o=>o.id==oid)[f]=v; save(); renderDetail(); }
         function switchSubTab(t) { document.getElementById('sub-order').classList.toggle('hidden',t!=='order'); document.getElementById('sub-calc').classList.toggle('hidden',t!=='calc'); if(t==='calc') renderShipCalc(); }
+        function openShipManualModal() { editingShipId = null; document.getElementById('sm-title').innerText='建立出貨單'; document.querySelectorAll('#shipManualModal input').forEach(i=>i.value=''); openModal('shipManualModal'); }
+        function editShipManual(idx) { editingShipId=idx; const m=db.manualShips[idx]; document.getElementById('sm-fb').value=m.fbName; document.getElementById('sm-name').value=m.realName; document.getElementById('sm-store').value=m.store; document.getElementById('sm-code').value=m.orderCode; openModal('shipManualModal'); }
+        function saveManualShip() { const data={fbName:document.getElementById('sm-fb').value,realName:document.getElementById('sm-name').value,store:document.getElementById('sm-store').value,orderCode:document.getElementById('sm-code').value}; if(!data.fbName) return alert('名？'); if(editingShipId!==null) db.manualShips[editingShipId]=data; else db.manualShips.push(data); save(); renderShippingWorkspace(); closeModal('shipManualModal'); }
+        function resShip(i) { db.manualShips.push({fbName:db.historyShips[i].name,realName:'還原',store:'-',orderCode:'-'}); db.historyShips.splice(i,1); save(); renderHistory(); }
+        function resG(id) { db.groups[id]=db.historyGroups[id]; delete db.historyGroups[id]; save(); location.reload(); }
+        function upGP(id,v) { db.groups[id].progress=v; db.groups[id].update=new Date().toLocaleDateString(); save(); renderDashboard(); }
+        function upOS(oid,f,v) { db.groups[db.activeGid].orders.find(o=>o.id==oid)[f]=v; save(); renderDetail(); }
         function upPW(i,v) { db.groups[db.activeGid].products[i].weight=parseFloat(v)||0; save(); renderShipCalc(); }
-        function updateGroupShipData() { db.groups[db.activeGid].shipC=parseFloat(document.getElementById('c-ship').value)||0; db.groups[db.activeGid].weight=parseFloat(document.getElementById('c-weight').value)||0; save(); renderShipCalc(); }
-        function delO(id) { if(confirm('刪？')) { db.groups[db.activeGid].orders=db.groups[db.activeGid].orders.filter(o=>o.id!=id); save(); renderDetail(); } }
+        function createG() { const name=document.getElementById('newGName').value; const ps=[]; document.querySelectorAll('#p-inputs .flex').forEach(r=>{ const pn=r.querySelector('.p-name').value; const pp=parseInt(r.querySelector('.p-price').value)||0; if(pn)ps.push({name:pn,price:pp,weight:0}); }); if(editingGroupId){ db.groups[editingGroupId].name=name; db.groups[editingGroupId].products=ps; } else { const id='g'+Date.now(); db.groups[id]={id,name,products:ps,orders:[],progress:'開團中',update:new Date().toLocaleDateString(),shipC:0,weight:0}; } editingGroupId=null; save(); location.reload(); }
+        function editG(id) { editingGroupId=id; const g=db.groups[id]; document.getElementById('newGName').value=g.name; document.getElementById('p-inputs').innerHTML=''; g.products.forEach(p=>{ const d=document.createElement('div'); d.className='flex gap-2'; d.innerHTML=`<input value="${p.name}" class="flex-1 border-b p-name text-xs"><input value="${p.price}" type="number" class="w-20 border-b p-price text-xs">`; document.getElementById('p-inputs').appendChild(d); }); openModal('groupModal'); }
         function deleteG(id) { if(confirm('刪除？')) { delete db.groups[id]; save(); location.reload(); } }
-        function showStats() { const g=db.groups[db.activeGid]; const s={}; g.orders.forEach(o=>o.items.forEach(it=>s[it.name]=(s[it.name]||0)+it.qty)); const c=document.getElementById('stats-content'); c.innerHTML=''; Object.entries(s).forEach(([n,q])=>{ c.innerHTML+=`<div class="flex justify-between border-b py-2 text-sm"><span class="font-bold">${n}</span><span class="text-rose-500 font-mono">${q} 份</span></div>`; }); openModal('statsModal'); }
-        function doGlobalSearch() { const q=document.getElementById('g-search-q').value.trim(); const res=document.getElementById('g-search-res'); res.innerHTML=''; if(!q) return; Object.values(db.groups).forEach(gn=>{ gn.orders.filter(o=>o.name.includes(q)).forEach(m=>{ res.innerHTML+=`<div class="glass-card p-5 border-l-4 border-rose-500"><div class="flex justify-between items-start mb-2"><span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-1 rounded font-bold">${gn.name}</span><span class="text-xs font-bold text-blue-500">${m.chk}</span></div><h4 class="font-bold text-gray-800">${m.name} ($${m.price})</h4><p class="text-xs text-rose-400 my-2">${m.itemsStr}</p></div>`; }); }); }
+        function delO(id) { if(confirm('刪？')) { db.groups[db.activeGid].orders=db.groups[db.activeGid].orders.filter(x=>x.id!=id); save(); renderDetail(); } }
+        function delShipP(i) { if(confirm('刪？')) { db.historyShips.splice(i,1); save(); renderHistory(); } }
+        function delGP(id) { if(confirm('刪？')) { delete db.historyGroups[id]; save(); renderHistory(); } }
+        function editO(oid) { editingOrderId=oid; const o=db.groups[db.activeGid].orders.find(x=>x.id==oid); document.getElementById('inName').value=o.name; document.getElementById('inSocial').value=o.social; document.getElementById('inLast').value=o.last; document.getElementById('inPayDate').value=o.payDate; document.getElementById('inMemo').value=o.memo; renderPSelector(o.items); openModal('orderModal'); }
+        function renderPSelector(cur=[]) { const area=document.getElementById('p-selector'); area.innerHTML=''; db.groups[db.activeGid].products.forEach((p,i)=>{ let q=0; const f=cur.find(x=>x.name===p.name); if(f) q=f.qty; area.innerHTML+=`<div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm"><span class="text-xs font-bold text-gray-700">${p.name}</span><div class="flex items-center space-x-3"><button onclick="adj(${i},-1)" class="w-6 h-6 bg-white rounded-full shadow">-</button><span id="qty-${i}" class="font-bold text-sm">${q}</span><button onclick="adj(${i},1)" class="w-6 h-6 bg-rose-500 text-white rounded-full shadow">+</button></div></div>`; }); updatePrice(); }
+        function showStats() { const s={}; db.groups[db.activeGid].orders.forEach(o=>o.items.forEach(it=>s[it.name]=(s[it.name]||0)+it.qty)); alert(Object.entries(s).map(([n,q])=>`${n}: ${q}`).join('\n')); }
+        function doShipSearch() { const q=document.getElementById('sh-search').value.trim(); const res=document.getElementById('sh-res'); const area=document.getElementById('sh-items-check'); if(!q){ res.classList.add('hidden'); return; } area.innerHTML=''; let f=false; Object.values(db.groups).forEach(g=>{ if(g.progress==='已抵台'){ const o=g.orders.find(x=>x.name===q); if(o){ f=true; o.items.forEach(it=>{ area.innerHTML+=`<div class="flex items-center space-x-3 bg-white p-3 rounded-xl border border-rose-100 font-bold text-xs"><input type="checkbox" class="w-5 h-5 accent-rose-500"><span>[${g.name}] ${it.name} x ${it.qty}</span></div>`; }); } } }); res.classList.toggle('hidden', !f); }
+        function openVerifyModal(i) { const m=db.manualShips[i]; document.getElementById('verify-info').innerText=`買家：${m.fbName}`; const area=document.getElementById('verify-items-area'); area.innerHTML=''; let f=false; Object.values(db.groups).forEach(g=>{ if(g.progress==='已抵台'){ const o=g.orders.find(x=>x.name===m.fbName); if(o){ f=true; o.items.forEach(it=>{ area.innerHTML+=`<div class="flex items-center space-x-3 bg-white p-3 rounded-xl border border-rose-100 font-bold text-xs"><input type="checkbox" class="w-5 h-5 accent-rose-500"><span>[${g.name}] ${it.name} x ${it.qty}</span></div>`; }); } } }); if(!f) area.innerHTML='<p class="text-center text-gray-400">查無已抵台貨物。</p>'; document.getElementById('btn-finish-verify').onclick=()=>finishVerify(i); openModal('verifyModal'); }
+        function finishVerify(i) { const m=db.manualShips[i]; if(!confirm('確認？')) return; let info=""; Object.values(db.groups).forEach(g=>{ if(g.progress==='已抵台'){ const o=g.orders.find(x=>x.name===m.fbName); if(o){ info+=`[${g.name}] ${o.itemsStr} `; g.orders=g.orders.filter(x=>x.name!==m.fbName); } } }); db.historyShips.push({name:m.fbName,info:info||"手動單",detail:`${m.realName}/${m.store}/${m.orderCode}`,date:new Date().toLocaleDateString()}); db.manualShips.splice(i,1); save(); alert('完成！'); location.reload(); }
+        function updateGroupShipData() { db.groups[db.activeGid].shipC=parseFloat(document.getElementById('c-ship').value)||0; db.groups[db.activeGid].weight=parseFloat(document.getElementById('c-weight').value)||0; save(); renderShipCalc(); }
+        function upGM(id,v) { db.groups[id].memo=v; save(); }
+        function doGlobalSearch() { const q=document.getElementById('g-search-q').value.trim(); const res=document.getElementById('g-search-res'); res.innerHTML=''; if(!q)return; Object.values(db.groups).forEach(gn=>{ gn.orders.filter(o=>o.name.includes(q)).forEach(m=>{ res.innerHTML+=`<div class="glass-card p-5 border-l-4 border-rose-500"><div class="flex justify-between items-start mb-2"><span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-1 rounded font-bold">${gn.name}</span><span class="text-xs font-bold text-blue-500">${m.chk}</span></div><h4 class="font-bold text-gray-800">${m.name} ($${m.price})</h4><p class="text-xs text-rose-400 my-2">${m.itemsStr}</p></div>`; }); }); }
+
         window.onload = () => { renderSide(); renderDashboard(); };
     </script>
 </body>
